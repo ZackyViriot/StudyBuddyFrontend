@@ -210,81 +210,46 @@ const DemoModal = ({ isOpen, onClose, title, children }: DemoModalProps) => {
 };
 
 const StudyGroupDemo = () => {
-  const [step, setStep] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    if (isMounted) {
-      const timer = setInterval(() => {
-        setStep((prev) => (prev + 1) % 3);
-      }, 2000);
-      return () => clearInterval(timer);
-    }
-  }, [isMounted]);
-
-  if (!isMounted) return null;
+  const [selectedGroup] = useState(null);
 
   return (
-    <div className="space-y-4">
-      <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center text-white">
-            <Users size={18} />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Left Column: Group List */}
+      <div className="space-y-4">
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <h4 className="font-medium mb-4">Your Study Groups</h4>
+          <div className="space-y-2">
+            {[
+              { name: "Algorithm Masters", members: 4, lastActive: "2 hours ago" },
+              { name: "Database Design", members: 3, lastActive: "1 day ago" },
+              { name: "Web Development", members: 5, lastActive: "Just now" }
+            ].map((group) => (
+              <div
+                key={group.name}
+                className="p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="font-medium">{group.name}</h5>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {group.members} members &bull; {group.lastActive}
+                    </p>
+                  </div>
+                  <Users className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+            ))}
           </div>
-          <h4 className="font-medium">Advanced Algorithms Study Group</h4>
-        </div>
-        <div className="space-y-3">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <Check size={16} className="text-green-500" />
-            <span>Computer Science - Algorithm Analysis</span>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <Clock size={16} className="text-indigo-500" />
-            <span>Weekly sessions on Thursdays at 4:00 PM</span>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <Users size={16} className="text-indigo-500" />
-            <span>8 members</span>
-          </motion.div>
         </div>
       </div>
-      <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg">
-        <h4 className="font-medium mb-3">Active Members</h4>
-        <div className="flex -space-x-2">
-          {["A", "B", "C", "D", "E"].map((initial, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 border-2 border-white dark:border-gray-800 flex items-center justify-center text-sm font-medium text-indigo-600 dark:text-indigo-400"
-            >
-              {initial}
-            </motion.div>
-          ))}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-            className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-medium text-indigo-600 dark:text-indigo-400"
-          >
-            +3
-          </motion.div>
+
+      {/* Right Column: Group Details */}
+      <div className="space-y-4">
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <h4 className="font-medium mb-4">Group Details</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Select a group to view details
+          </p>
         </div>
       </div>
     </div>
@@ -292,87 +257,45 @@ const StudyGroupDemo = () => {
 };
 
 const ResourcesDemo = () => {
-  const [activeMessage, setActiveMessage] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    if (isMounted) {
-      const timer = setInterval(() => {
-        setActiveMessage((prev) => (prev + 1) % 3);
-      }, 3000);
-      return () => clearInterval(timer);
-    }
-  }, [isMounted]);
-
-  if (!isMounted) return null;
-
-  const messages = [
-    {
-      user: "Alice Chen",
-      message: "Here are my notes from today's session on Dynamic Programming",
-      time: "2:30 PM",
-      attachment: "dp_notes.pdf"
-    },
-    {
-      user: "Bob Smith",
-      message: "Found this great video explaining the knapsack problem",
-      time: "2:45 PM",
-      link: "https://example.com/video"
-    },
-    {
-      user: "Carol Johnson",
-      message: "I created a practice problem set for next week",
-      time: "3:15 PM",
-      attachment: "practice_problems.pdf"
-    }
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg space-y-4">
-        {messages.map((chat, i) => (
-          <motion.div
-            key={i}
-            initial={false}
-            animate={{
-              scale: activeMessage === i ? 1 : 0.95,
-              opacity: activeMessage === i ? 1 : 0.5,
-            }}
-            className="flex gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-              {chat.user[0]}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{chat.user}</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{chat.time}</span>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Left Column: Resources */}
+      <div className="space-y-4">
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <h4 className="font-medium mb-4">Shared Resources</h4>
+          <div className="space-y-2">
+            {[
+              { name: "Data Structures Notes", type: "PDF", shared: "Yesterday" },
+              { name: "Algorithm Cheat Sheet", type: "Document", shared: "2 days ago" },
+              { name: "Study Guide", type: "Spreadsheet", shared: "1 week ago" }
+            ].map((resource) => (
+              <div
+                key={resource.name}
+                className="p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="font-medium">{resource.name}</h5>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {resource.type} &bull; Shared {resource.shared}
+                    </p>
+                  </div>
+                  <BookOpen className="w-5 h-5 text-gray-400" />
+                </div>
               </div>
-              <p className="text-gray-700 dark:text-gray-300">{chat.message}</p>
-              {chat.attachment && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400"
-                >
-                  <BookOpen size={16} />
-                  {chat.attachment}
-                </motion.div>
-              )}
-              {chat.link && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400"
-                >
-                  <BookOpen size={16} />
-                  View Video
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Resource Preview */}
+      <div className="space-y-4">
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <h4 className="font-medium mb-4">Resource Preview</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Select a resource to preview
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -509,77 +432,24 @@ const ProgressDemo = () => {
             })}
           </div>
         </div>
-
-        {/* Selected Day Details */}
-        {selectedDay && calendarData[selectedDay] && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm"
-          >
-            <h5 className="font-medium mb-2">
-              {calendarData[selectedDay].title}
-            </h5>
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <Clock size={14} />
-              <span>{calendarData[selectedDay].time}</span>
-            </div>
-          </motion.div>
-        )}
       </div>
 
-      {/* Right Column: Progress and Goals */}
+      {/* Right Column: Details */}
       <div className="space-y-4">
-        {/* Progress Section */}
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg">
-          <h4 className="font-medium mb-3">Progress Tracking</h4>
-          <div className="space-y-3">
-            {getProgressData(selectedDay).map((item, i) => (
-              <motion.div
-                key={i}
-                initial={false}
-                animate={{
-                  scale: activeProgress === i ? 1 : 0.98,
-                  opacity: activeProgress === i ? 1 : 0.7,
-                }}
-              >
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{item.topic}</span>
-                  <span>{item.progress}%</span>
-                </div>
-                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.progress}%` }}
-                    transition={{ duration: 1, delay: i * 0.2 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Goals Section */}
         <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-          <h4 className="font-medium mb-3">Study Goals</h4>
-          <div className="space-y-3">
-            {getGoals(selectedDay).map((goal, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full bg-${goal.color}-500`} />
-                  <span className="text-sm">{goal.title}</span>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{goal.deadline}</span>
-              </motion.div>
-            ))}
-          </div>
+          <h4 className="font-medium mb-4">Selected Day</h4>
+          {selectedDay && calendarData[selectedDay] ? (
+            <div className="space-y-2">
+              <h5 className="font-medium">{calendarData[selectedDay].title}</h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {calendarData[selectedDay].time}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Select a day to view details
+            </p>
+          )}
         </div>
       </div>
     </div>

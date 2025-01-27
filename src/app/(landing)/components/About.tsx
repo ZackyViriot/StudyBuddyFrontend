@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 const stats = [
   { label: 'Active Users', value: '10,000+' },
@@ -71,19 +72,19 @@ const testimonials = [
     quote: "StudyBuddy has completely transformed how I prepare for exams. The collaborative features are amazing!",
     author: "Sarah Johnson",
     role: "Computer Science Student",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    image: "/images/testimonial-1.jpg",
   },
   {
-    quote: "I've improved my grades significantly since joining StudyBuddy. The community is incredibly supportive.",
+    quote: "I&apos;ve improved my grades significantly since joining StudyBuddy. The community is incredibly supportive.",
     author: "Michael Chen",
     role: "Medical Student",
-    image: "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    image: "/images/testimonial-2.jpg",
   },
   {
-    quote: "The study groups feature helped me connect with peers who share my academic goals. It's been invaluable!",
+    quote: "The study groups feature helped me connect with peers who share my academic goals. It&apos;s been invaluable!",
     author: "Emily Rodriguez",
     role: "Law Student",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    image: "/images/testimonial-3.jpg",
   },
 ];
 
@@ -168,10 +169,12 @@ export function About() {
                 className="h-full bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg"
               >
                 <div className="flex items-center mb-6">
-                  <img
+                  <Image
                     className="h-12 w-12 rounded-full object-cover"
                     src={testimonial.image}
                     alt={testimonial.author}
+                    width={48}
+                    height={48}
                   />
                   <div className="ml-4">
                     <div className="text-base font-medium text-gray-900 dark:text-white">

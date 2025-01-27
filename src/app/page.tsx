@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from 'next-themes';
+import { AnimatePresence } from 'framer-motion';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 import { Footer } from '@/app/(landing)/components/Footer';
 import { Hero } from '@/app/(landing)/components/Hero';
@@ -16,7 +15,6 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setIsMounted(true);

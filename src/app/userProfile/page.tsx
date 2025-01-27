@@ -1,15 +1,15 @@
 'use client';
 
+import { useEffect } from 'react';
 import { ProfileForm } from './components/ProfileForm';
-import { useEffect, useState } from 'react';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 
 export default function UserProfile() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   useEffect(() => {
     const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    if (!token) {
+      window.location.href = '/';
+    }
   }, []);
 
   const handleLogout = () => {

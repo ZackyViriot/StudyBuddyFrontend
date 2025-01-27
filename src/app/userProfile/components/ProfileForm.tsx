@@ -5,7 +5,6 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { motion } from 'framer-motion';
 import { User2, Mail, School, BookOpen, Clock, Camera, Upload, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import Image from 'next/image';
@@ -152,7 +151,7 @@ export function ProfileForm() {
 
         const userData = JSON.parse(storedUser);
         if (!userData.id) {
-          window.location.href = '/';
+          handleLogout();
           return;
         }
 
@@ -164,10 +163,10 @@ export function ProfileForm() {
         });
 
         const user = response.data;
-        console.log('Fetched user data:', user); // Debug log
+        console.log('Fetched user data:', user);
 
         // Parse study preferences from string
-        let parsedStudyPreferences = {
+        const parsedStudyPreferences = {
           environment: '',
           groupSize: '',
           studyStyle: '',
@@ -179,13 +178,13 @@ export function ProfileForm() {
           prefPairs.forEach((pair: string) => {
             const [key, value] = pair.split(': ');
             if (key && value && key in parsedStudyPreferences) {
-              (parsedStudyPreferences as any)[key] = value;
+              (parsedStudyPreferences as Record<string, string>)[key] = value;
             }
           });
         }
 
         // Parse availability from string
-        let parsedAvailability = {
+        const parsedAvailability = {
           days: [] as string[],
           timeSlots: [] as string[]
         };
@@ -218,10 +217,16 @@ export function ProfileForm() {
         console.log('Parsed profile:', {
           studyPreferences: parsedStudyPreferences,
           availability: parsedAvailability
-        }); // Debug log
-      } catch (error: any) {
+        });
+      } catch (error) {
         console.error('Failed to fetch user data:', error);
-        if (error.response?.status === 401) {
+        if (error instanceof Error && 
+            typeof error === 'object' && 
+            'response' in error && 
+            error.response && 
+            typeof error.response === 'object' && 
+            'status' in error.response && 
+            error.response.status === 401) {
           handleLogout();
           return;
         }
@@ -286,23 +291,19 @@ export function ProfileForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
     if (file.size > MAX_IMAGE_SIZE) {
       setError('Image size must be less than 1MB');
       return;
     }
 
     try {
-      setIsSaving(true);
       const compressedImage = await compressImage(file);
       setImageFile(file);
       setProfile(prev => ({ ...prev, profilePicture: compressedImage }));
       setError(null);
-    } catch (err) {
-      console.error('Failed to process image:', err);
+    } catch (error) {
+      console.error('Failed to process image:', error);
       setError('Failed to process image. Please try a different one.');
-    } finally {
-      setIsSaving(false);
     }
   };
 
