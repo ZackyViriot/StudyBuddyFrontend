@@ -55,6 +55,13 @@ interface ApiError {
   message?: string;
 }
 
+interface StudyPreferences {
+  environment: string;
+  groupSize: string;
+  studyStyle: string;
+  noiseLevel: string;
+}
+
 const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 const compressImage = async (file: File): Promise<string> => {
@@ -393,9 +400,9 @@ export function ProfileForm() {
         
         // Parse the strings back into objects for the frontend
         const parsedStudyPreferences = response.data.studyPreferences
-          ? response.data.studyPreferences.split(', ').reduce((acc: any, pref: string) => {
+          ? response.data.studyPreferences.split(', ').reduce((acc: StudyPreferences, pref: string) => {
               const [key, value] = pref.split(': ');
-              if (key && value) acc[key] = value;
+              if (key && value && key in acc) acc[key as keyof StudyPreferences] = value;
               return acc;
             }, {
               environment: '',
