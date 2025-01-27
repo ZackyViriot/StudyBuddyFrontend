@@ -1,0 +1,1 @@
+// This file exists to prevent Next.js from treating this folder as a route 
