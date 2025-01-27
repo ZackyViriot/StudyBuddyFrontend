@@ -6,7 +6,7 @@ import { Navbar } from '@/app/(landing)/components/Navbar';
 import { Footer } from '@/app/(landing)/components/Footer';
 import { Hero } from '@/app/(landing)/components/Hero';
 import { Features } from '@/app/(landing)/components/Features';
-import { About } from '@/app/(landing)/components/About';
+import About from '@/app/(landing)/components/About';
 import { Pricing } from '@/app/(landing)/components/Pricing';
 import { LoginForm } from '@/app/(landing)/components/LoginForm';
 import { SignupForm } from '@/app/(landing)/components/SignupForm';

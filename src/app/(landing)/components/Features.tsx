@@ -210,8 +210,6 @@ const DemoModal = ({ isOpen, onClose, title, children }: DemoModalProps) => {
 };
 
 const StudyGroupDemo = () => {
-  const [selectedGroup] = useState(null);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Left Column: Group List */}
@@ -308,74 +306,14 @@ interface CalendarTask {
 }
 
 const ProgressDemo = () => {
-  const [activeProgress, setActiveProgress] = useState(0);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    if (isMounted) {
-      const timer = setInterval(() => {
-        setActiveProgress((prev) => (prev + 1) % 2);
-      }, 2000);
-      return () => clearInterval(timer);
-    }
   }, [isMounted]);
 
   if (!isMounted) return null;
-
-  // Update progress data based on selected day
-  const getProgressData = (day: number | null) => {
-    switch (day) {
-      case 4:
-        return [
-          { topic: "Dynamic Programming", progress: 80 },
-          { topic: "Recursion", progress: 90 }
-        ];
-      case 8:
-        return [
-          { topic: "Graph Theory", progress: 65 },
-          { topic: "BFS/DFS", progress: 75 }
-        ];
-      case 12:
-        return [
-          { topic: "Project Planning", progress: 40 },
-          { topic: "Team Collaboration", progress: 85 }
-        ];
-      default:
-        return [
-          { topic: "Overall Progress", progress: 70 },
-          { topic: "Weekly Goals", progress: 60 }
-        ];
-    }
-  };
-
-  // Update goals based on selected day
-  const getGoals = (day: number | null) => {
-    switch (day) {
-      case 4:
-        return [
-          { title: "Complete DP Exercises", deadline: "2 days left", color: "green" },
-          { title: "Review Recursion Notes", deadline: "Today", color: "yellow" }
-        ];
-      case 8:
-        return [
-          { title: "Graph Theory Quiz", deadline: "5 days left", color: "red" },
-          { title: "Practice Problems", deadline: "3 days left", color: "yellow" }
-        ];
-      case 12:
-        return [
-          { title: "Group Project Meeting", deadline: "Today", color: "green" },
-          { title: "Submit Progress Report", deadline: "Tomorrow", color: "indigo" }
-        ];
-      default:
-        return [
-          { title: "Complete DP Course", deadline: "2 days left", color: "green" },
-          { title: "Graph Theory Quiz", deadline: "5 days left", color: "yellow" },
-          { title: "Group Project", deadline: "Next week", color: "indigo" }
-        ];
-    }
-  };
 
   const calendarData: Record<number, CalendarTask> = {
     4: { title: "Dynamic Programming Study", time: "2:00 PM", type: "study" },
@@ -383,17 +321,6 @@ const ProgressDemo = () => {
     12: { title: "Group Project Meeting", time: "4:00 PM", type: "meeting" },
     15: { title: "Algorithm Practice", time: "2:30 PM", type: "practice" },
     20: { title: "Mock Interview", time: "5:00 PM", type: "interview" }
-  };
-
-  const getTaskColor = (type: string) => {
-    switch (type) {
-      case 'study': return 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200';
-      case 'quiz': return 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200';
-      case 'meeting': return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200';
-      case 'practice': return 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200';
-      case 'interview': return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200';
-      default: return 'bg-white dark:bg-gray-800';
-    }
   };
 
   return (
@@ -419,7 +346,7 @@ const ProgressDemo = () => {
                   onClick={() => setSelectedDay(hasTask ? day : null)}
                   className={`
                     aspect-square rounded-lg flex flex-col items-center justify-center text-sm cursor-pointer
-                    ${hasTask ? getTaskColor(hasTask.type) : 'bg-white dark:bg-gray-800'}
+                    ${hasTask ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' : 'bg-white dark:bg-gray-800'}
                     ${selectedDay === day ? 'ring-2 ring-indigo-500' : ''}
                   `}
                 >

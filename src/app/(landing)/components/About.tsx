@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { Users, BookOpen, Calendar } from 'lucide-react';
 
 const stats = [
   { label: 'Active Users', value: '10,000+' },
@@ -88,107 +88,79 @@ const testimonials = [
   },
 ];
 
-export function About() {
+export default function About() {
   return (
-    <section className="relative py-16 sm:py-24 bg-gray-50 dark:bg-gray-800/50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 mb-16">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="text-center"
-            >
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="text-4xl font-bold text-indigo-600 dark:text-indigo-400"
-              >
-                {stat.value}
-              </motion.div>
-              <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+    <section id="about" className="py-16 bg-white dark:bg-gray-900">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            About StudyBuddy
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Your personalized study companion for better learning and collaboration
+          </p>
+        </motion.div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <motion.div
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                }}
-                className="h-full bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg"
-              >
-                <div className="flex items-center mb-4">
-                  <motion.div
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex-shrink-0 w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400"
-                  >
-                    {feature.icon}
-                  </motion.div>
-                  <h3 className="ml-4 text-xl font-semibold text-gray-900 dark:text-white">
-                    {feature.title}
-                  </h3>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
-              </motion.div>
-            </motion.div>
-          ))}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Connect with Peers
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              Find and connect with students who share your academic interests and goals
+            </p>
+          </motion.div>
 
-        {/* Testimonials */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.author}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <motion.div
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                }}
-                className="h-full bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg"
-              >
-                <div className="flex items-center mb-6">
-                  <Image
-                    className="h-12 w-12 rounded-full object-cover"
-                    src={testimonial.image}
-                    alt={testimonial.author}
-                    width={48}
-                    height={48}
-                  />
-                  <div className="ml-4">
-                    <div className="text-base font-medium text-gray-900 dark:text-white">
-                      {testimonial.author}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {testimonial.role}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 italic">"{testimonial.quote}"</p>
-              </motion.div>
-            </motion.div>
-          ))}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Collaborative Learning
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              Share resources, discuss topics, and learn together in an interactive environment
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Calendar className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Schedule Study Sessions
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              Organize and manage study sessions with your peers efficiently
+            </p>
+          </motion.div>
         </div>
       </div>
     </section>

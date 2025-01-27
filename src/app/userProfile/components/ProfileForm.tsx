@@ -430,17 +430,18 @@ export function ProfileForm() {
         setImageFile(null);
         setError(null);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update profile:', error);
-      if (error.response?.status === 401) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      if (err.response?.status === 401) {
         handleLogout();
         return;
       }
-      if (error.response?.status === 413) {
+      if (err.response?.status === 413) {
         setError('Image size is too large. Please try a smaller image or compress it further.');
         return;
       }
-      setError(error.response?.data?.message || 'Failed to save changes. Please try again.');
+      setError(err.response?.data?.message || 'Failed to save changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
