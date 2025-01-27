@@ -45,6 +45,16 @@ interface UpdateUserData {
   profilePicture?: string;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 const compressImage = async (file: File): Promise<string> => {
@@ -306,8 +316,8 @@ export function ProfileForm() {
 
   const confirmSave = async () => {
     setShowConfirm(false);
-    const event = new Event('submit');
-    await handleSubmit(event as any);
+    const event = new Event('submit') as unknown as React.FormEvent;
+    await handleSubmit(event);
     setHasChanges(false);
   };
 
@@ -419,9 +429,9 @@ export function ProfileForm() {
           profilePicture: response.data.profilePicture || ''
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to update profile:', error);
-      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      const err = error as ApiError;
       if (err.response?.status === 401) {
         handleLogout();
         return;

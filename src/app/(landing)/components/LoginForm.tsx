@@ -11,6 +11,16 @@ interface LoginFormProps {
   onSwitchToSignup: () => void;
 }
 
+interface LoginError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 const API_URL = 'http://localhost:8000';
 
 export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
@@ -40,14 +50,13 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
         onClose();
         router.push('/userProfile');
       }
-    } catch (error: any) {
-      setError(
-        error.response?.data?.message || 
-        'Invalid email or password. Please try again.'
-      );
+    } catch (error: unknown) {
+      const err = error as LoginError;
+      console.error('Login failed:', err);
+      setError(err.response?.data?.message || 'Failed to log in. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,7 +147,7 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
               onClick={onSwitchToSignup}
               className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
             >
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </motion.button>
           </div>
         </form>

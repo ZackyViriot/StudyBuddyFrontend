@@ -19,6 +19,16 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
+interface SignupError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 const API_URL = 'http://localhost:8000';
 
 export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
@@ -99,11 +109,10 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
             router.push('/userProfile'); // Redirect to profile
           }
         }
-      } catch (error: any) {
-        setServerError(
-          error.response?.data?.message || 
-          'An error occurred during signup. Please try again.'
-        );
+      } catch (error: unknown) {
+        const err = error as SignupError;
+        console.error('Signup failed:', err);
+        setServerError(err.response?.data?.message || 'Failed to sign up. Please try again.');
       }
     }
     setIsSubmitting(false);

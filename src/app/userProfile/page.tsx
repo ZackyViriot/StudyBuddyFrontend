@@ -1,22 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ProfileForm } from './components/ProfileForm';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 
 export default function UserProfile() {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/';
-    }
+    setMounted(true);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
-  };
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
