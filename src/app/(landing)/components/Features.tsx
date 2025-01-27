@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, BookOpen, Calendar, X, Check, Clock, ChevronRight } from 'lucide-react';
+import { Users, BookOpen, Calendar, X } from 'lucide-react';
 
 interface DemoModalProps {
   isOpen: boolean;

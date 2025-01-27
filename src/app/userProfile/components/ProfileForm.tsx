@@ -111,13 +111,9 @@ export function ProfileForm() {
     profilePicture: ''
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [changedFields, setChangedFields] = useState<Record<string, string>>({});
 
   // Study preferences options
   const studyPreferencesOptions = {
@@ -258,7 +254,6 @@ export function ProfileForm() {
           [preference]: value
         }
       }));
-      setChangedFields(prev => ({ ...prev, [name]: value }));
       setHasChanges(true);
       return;
     }
@@ -283,7 +278,6 @@ export function ProfileForm() {
 
     // Handle regular fields
     setProfile(prev => ({ ...prev, [name]: value }));
-    setChangedFields(prev => ({ ...prev, [name]: value }));
     setHasChanges(true);
   };
 
@@ -298,7 +292,6 @@ export function ProfileForm() {
 
     try {
       const compressedImage = await compressImage(file);
-      setImageFile(file);
       setProfile(prev => ({ ...prev, profilePicture: compressedImage }));
       setError(null);
     } catch (error) {
@@ -315,13 +308,12 @@ export function ProfileForm() {
     setShowConfirm(false);
     const event = new Event('submit');
     await handleSubmit(event as any);
-    setChangedFields({});
     setHasChanges(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+    setIsLoading(true);
     setError(null);
     
     try {
@@ -426,9 +418,6 @@ export function ProfileForm() {
           availability: parsedAvailability,
           profilePicture: response.data.profilePicture || ''
         }));
-
-        setImageFile(null);
-        setError(null);
       }
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -443,7 +432,7 @@ export function ProfileForm() {
       }
       setError(err.response?.data?.message || 'Failed to save changes. Please try again.');
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
@@ -732,7 +721,6 @@ export function ProfileForm() {
                 <Button
                   type="button"
                   onClick={() => {
-                    setChangedFields({});
                     setHasChanges(false);
                     window.location.reload();
                   }}
