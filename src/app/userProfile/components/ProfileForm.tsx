@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { User2, Mail, School, BookOpen, Clock, Camera, Upload, Loader2 } from 'lucide-react';
+import { User2, School, BookOpen, Clock, Camera, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import Image from 'next/image';
 import { Card, CardHeader, CardContent } from './ui/card';
