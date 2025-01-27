@@ -85,7 +85,7 @@ const DemoModal = ({ isOpen, onClose, title, children }: DemoModalProps) => {
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">Invite Members</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Add fellow students to your group. They'll receive invitations and can join with one click.
+                      Add fellow students to your group. They&apos;ll receive invitations and can join with one click.
                     </p>
                   </div>
                 </>
@@ -108,7 +108,7 @@ const DemoModal = ({ isOpen, onClose, title, children }: DemoModalProps) => {
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">Resource Library</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      All shared resources are organized and easily accessible in your group's library.
+                      All shared resources are organized and easily accessible in your group&apos;s library.
                     </p>
                   </div>
                 </>
