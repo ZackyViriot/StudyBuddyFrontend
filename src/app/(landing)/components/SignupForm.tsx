@@ -80,6 +80,8 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
 
     if (validateForm()) {
       try {
+        console.log('Attempting to create user with API URL:', config.API_URL);
+        
         // Create user
         const response = await axios.post(`${config.API_URL}/users`, {
           firstName: formData.firstname,
@@ -89,6 +91,7 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         });
 
         if (response.data) {
+          console.log('User created successfully, attempting login');
           // Automatically log in after successful signup
           const loginResponse = await axios.post(`${config.API_URL}/auth/login`, {
             email: formData.email,
@@ -98,19 +101,23 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
           if (loginResponse.data.access_token) {
             const userData = {
               ...loginResponse.data.user,
-              firstName: formData.firstname, // Ensure first name is saved
-              lastName: formData.lastname,   // Ensure last name is saved
+              firstName: formData.firstname,
+              lastName: formData.lastname,
             };
-            // Store the token and user data
             localStorage.setItem('token', loginResponse.data.access_token);
             localStorage.setItem('user', JSON.stringify(userData));
-            onClose(); // Close the signup modal
-            router.push('/userProfile'); // Redirect to profile
+            onClose();
+            router.push('/userProfile');
           }
         }
       } catch (error: unknown) {
         const err = error as SignupError;
         console.error('Signup failed:', err);
+        console.error('Error details:', {
+          message: err.message,
+          response: err.response,
+          config: (err as any).config
+        });
         setServerError(err.response?.data?.message || 'Failed to sign up. Please try again.');
       }
     }
