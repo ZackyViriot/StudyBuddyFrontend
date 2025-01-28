@@ -88,13 +88,17 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
       try {
         console.log('Attempting to create user with API URL:', config.API_URL);
         
-        // Create user
-        const response = await axios.post(`${config.API_URL}/users`, {
+        const userData = {
           firstname: formData.firstname,
           lastname: formData.lastname,
           email: formData.email,
           password: formData.password
-        });
+        };
+        
+        console.log('Sending user data:', userData);
+        
+        // Create user
+        const response = await axios.post(`${config.API_URL}/users`, userData);
 
         if (response.data) {
           console.log('User created successfully, attempting login');
@@ -107,8 +111,8 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
           if (loginResponse.data.access_token) {
             const userData = {
               ...loginResponse.data.user,
-              firstName: formData.firstname,
-              lastName: formData.lastname,
+              firstname: formData.firstname,
+              lastname: formData.lastname,
             };
             localStorage.setItem('token', loginResponse.data.access_token);
             localStorage.setItem('user', JSON.stringify(userData));

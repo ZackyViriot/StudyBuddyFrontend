@@ -12,8 +12,8 @@ import { Card, CardHeader, CardContent } from './ui/card';
 import { config } from '@/config';
 
 interface UserProfile {
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
   university: string;
   major: string;
@@ -33,8 +33,8 @@ interface UserProfile {
 }
 
 interface UpdateUserData {
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   school: string;
   major: string;
   year: string;
@@ -107,8 +107,8 @@ export function ProfileForm() {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile>({
-    firstName: '',
-    lastName: '',
+    firstname: '',
+    lastname: '',
     email: '',
     university: '',
     major: '',
@@ -214,8 +214,8 @@ export function ProfileForm() {
         }
 
         setProfile({
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
+          firstname: user.firstname || '',
+          lastname: user.lastname || '',
           email: user.email || '',
           university: user.school || '',
           major: user.major || '',
@@ -365,8 +365,8 @@ export function ProfileForm() {
       ].filter(Boolean).join(' | ');
 
       let updateData: UpdateUserData = {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
+        firstname: profile.firstname,
+        lastname: profile.lastname,
         school: profile.university,
         major: profile.major,
         year: profile.year,
@@ -533,7 +533,7 @@ export function ProfileForm() {
                   {/* Profile Info */}
                   <div className="text-center space-y-3">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {profile.firstName} {profile.lastName}
+                      {profile.firstname} {profile.lastname}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-300">{profile.email}</p>
                     {profile.university && (
@@ -558,21 +558,21 @@ export function ProfileForm() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstname">First Name</Label>
                     <Input
-                      id="firstName"
-                      name="firstName"
-                      value={profile.firstName}
+                      id="firstname"
+                      name="firstname"
+                      value={profile.firstname}
                       onChange={handleChange}
                       className="mt-1.5"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastname">Last Name</Label>
                     <Input
-                      id="lastName"
-                      name="lastName"
-                      value={profile.lastName}
+                      id="lastname"
+                      name="lastname"
+                      value={profile.lastname}
                       onChange={handleChange}
                       className="mt-1.5"
                     />
