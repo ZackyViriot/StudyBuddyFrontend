@@ -28,6 +28,12 @@ interface SignupError {
     status?: number;
   };
   message?: string;
+  config?: {
+    url?: string;
+    method?: string;
+    headers?: Record<string, string>;
+    data?: string;
+  };
 }
 
 export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
@@ -116,7 +122,7 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         console.error('Error details:', {
           message: err.message,
           response: err.response,
-          config: (err as any).config
+          config: err.config
         });
         setServerError(err.response?.data?.message || 'Failed to sign up. Please try again.');
       }
