@@ -9,8 +9,7 @@ import { User2, School, BookOpen, Clock, Camera, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import Image from 'next/image';
 import { Card, CardHeader, CardContent } from './ui/card';
-
-const API_URL = 'http://localhost:8000';
+import { config } from '@/config';
 
 interface UserProfile {
   firstName: string;
@@ -168,7 +167,7 @@ export function ProfileForm() {
           return;
         }
 
-        const response = await axios.get(`${API_URL}/users/${userData.id}`, {
+        const response = await axios.get(`${config.API_URL}/users/${userData.id}`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -383,7 +382,7 @@ export function ProfileForm() {
 
       // Update the profile data
       const response = await axios.put(
-        `${API_URL}/users/${userData.id}`, 
+        `${config.API_URL}/users/${userData.id}`, 
         updateData,
         {
           headers: { 

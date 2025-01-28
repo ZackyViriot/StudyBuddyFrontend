@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { config } from '@/config';
 
 interface LoginFormProps {
   onClose: () => void;
@@ -21,8 +22,6 @@ interface LoginError {
   message?: string;
 }
 
-const API_URL = 'http://localhost:8000';
-
 export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -38,7 +37,7 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
     setError(null);
 
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post(`${config.API_URL}/auth/login`, {
         email: formData.email,
         password: formData.password
       });

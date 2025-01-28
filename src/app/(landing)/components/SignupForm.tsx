@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { config } from '@/config';
 
 interface SignupFormProps {
   onClose: () => void;
@@ -28,8 +29,6 @@ interface SignupError {
   };
   message?: string;
 }
-
-const API_URL = 'http://localhost:8000';
 
 export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
   const router = useRouter();
@@ -82,7 +81,7 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
     if (validateForm()) {
       try {
         // Create user
-        const response = await axios.post(`${API_URL}/users`, {
+        const response = await axios.post(`${config.API_URL}/users`, {
           firstName: formData.firstname,
           lastName: formData.lastname,
           email: formData.email,
@@ -91,7 +90,7 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
 
         if (response.data) {
           // Automatically log in after successful signup
-          const loginResponse = await axios.post(`${API_URL}/auth/login`, {
+          const loginResponse = await axios.post(`${config.API_URL}/auth/login`, {
             email: formData.email,
             password: formData.password
           });
