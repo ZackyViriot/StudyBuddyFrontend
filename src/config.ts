@@ -5,7 +5,8 @@ const getBaseUrl = () => {
     if (window.location.hostname !== 'localhost') {
       return 'https://studybuddybackend-production.up.railway.app';
     }
-    return 'http://localhost:8000';
+    // For local development
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   }
   // Server-side
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -16,7 +17,8 @@ const getFrontendUrl = () => {
     if (window.location.hostname !== 'localhost') {
       return 'https://study-buddy-frontend-zeta.vercel.app';
     }
-    return 'http://localhost:3000';
+    // For local development
+    return process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
   }
   return process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
 };
