@@ -42,6 +42,15 @@ interface StudyGroup {
   };
 }
 
+interface FormData {
+  name: string;
+  description: string;
+  meetingType: string;
+  meetingDays: string[];
+  meetingLocation: string;
+  meetingTime: string;
+}
+
 export default function StudyGroupsPage() {
   const router = useRouter();
   const [allGroups, setAllGroups] = useState<StudyGroup[]>([]);
@@ -51,7 +60,7 @@ export default function StudyGroupsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStudyGroups = async (authToken: string) => {
+  const fetchStudyGroups = useCallback(async (authToken: string) => {
     try {
       if (!authToken) {
         console.error('No auth token available');
@@ -84,9 +93,9 @@ export default function StudyGroupsPage() {
       setAllGroups([]);
       throw error;
     }
-  };
+  }, [router]);
 
-  const fetchMyStudyGroups = async (authToken: string) => {
+  const fetchMyStudyGroups = useCallback(async (authToken: string) => {
     try {
       if (!authToken) {
         console.error('No auth token available');
@@ -119,7 +128,7 @@ export default function StudyGroupsPage() {
       setMyGroups([]);
       throw error;
     }
-  };
+  }, [router]);
 
   const fetchData = useCallback(async (authToken: string) => {
     setIsLoading(true);
@@ -179,7 +188,7 @@ export default function StudyGroupsPage() {
     }
   }, [router, fetchData]);
 
-  const handleCreateStudyGroup = async (formData: any) => {
+  const handleCreateStudyGroup = async (formData: FormData) => {
     try {
       if (!token) {
         setError('You must be logged in to create a study group');
