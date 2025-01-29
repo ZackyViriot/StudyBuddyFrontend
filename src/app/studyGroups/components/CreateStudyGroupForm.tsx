@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { Button } from '@/app/userProfile/components/ui/button';
 import { Input } from '@/app/userProfile/components/ui/input';
 import { Label } from '@/app/userProfile/components/ui/label';
 import { Textarea } from '@/app/userProfile/components/ui/textarea';
-import { Users, Calendar, MapPin, Clock, FileText } from 'lucide-react';
+import { Users, Calendar, MapPin } from 'lucide-react';
 
 interface FormData {
   name: string;
@@ -43,7 +43,7 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-  } = useForm();
+  } = useForm<FormData>();
 
   const meetingType = watch('meetingType');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -56,7 +56,7 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
     );
   };
 
-  const onFormSubmit = (data: FormData) => {
+  const onFormSubmit: SubmitHandler<FormData> = (data) => {
     const formData = {
       ...data,
       meetingDays: selectedDays,

@@ -2,10 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { Button } from '@/app/userProfile/components/ui/button';
-import { Monitor, Moon, Laptop } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
 const AuthenticatedNavbar = () => {
   const router = useRouter();

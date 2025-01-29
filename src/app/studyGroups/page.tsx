@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { StudyGroupCard } from './components/StudyGroupCard';
 import { CreateStudyGroupForm } from './components/CreateStudyGroupForm';
@@ -121,7 +121,7 @@ export default function StudyGroupsPage() {
     }
   };
 
-  const fetchData = async (authToken: string) => {
+  const fetchData = useCallback(async (authToken: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -129,12 +129,16 @@ export default function StudyGroupsPage() {
         fetchStudyGroups(authToken),
         fetchMyStudyGroups(authToken)
       ]);
-    } catch (error) {
-      setError('Failed to load study groups. Please try again later.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to load study groups. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchStudyGroups, fetchMyStudyGroups]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -357,7 +361,7 @@ export default function StudyGroupsPage() {
                   {myGroups.length === 0 ? (
                     <div className="text-center py-12">
                       <p className="text-gray-500 dark:text-gray-400">
-                        You haven't joined any study groups yet. Join one from the 'All Groups' tab!
+                        You haven&apos;t joined any study groups yet. Join one from the &apos;All Groups&apos; tab!
                       </p>
                     </div>
                   ) : (
