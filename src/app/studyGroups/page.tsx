@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/Tabs';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 import { config } from '@/config';
-import { Users, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/app/userProfile/components/ui/button';
 
 interface StudyGroup {
@@ -50,60 +50,6 @@ export default function StudyGroupsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (!storedToken) {
-      console.error('No token found in localStorage');
-      router.push('/');
-      return;
-    }
-
-    // Basic token validation
-    try {
-      const tokenParts = storedToken.split('.');
-      if (tokenParts.length !== 3) {
-        console.error('Invalid token format');
-        localStorage.removeItem('token');
-        router.push('/');
-        return;
-      }
-
-      const payload = JSON.parse(atob(tokenParts[1]));
-      console.log('JWT Payload:', payload);
-      const expirationTime = payload.exp * 1000; // Convert to milliseconds
-      
-      if (Date.now() >= expirationTime) {
-        console.error('Token has expired');
-        localStorage.removeItem('token');
-        router.push('/');
-        return;
-      }
-
-      setToken(storedToken);
-      localStorage.setItem('userId', payload.sub);
-      fetchData(storedToken);
-    } catch (error) {
-      console.error('Error validating token:', error);
-      localStorage.removeItem('token');
-      router.push('/');
-    }
-  }, [router]);
-
-  const fetchData = async (authToken: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await Promise.all([
-        fetchStudyGroups(authToken),
-        fetchMyStudyGroups(authToken)
-      ]);
-    } catch (err) {
-      setError('Failed to load study groups. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const fetchStudyGroups = async (authToken: string) => {
     try {
@@ -174,6 +120,60 @@ export default function StudyGroupsPage() {
       throw error;
     }
   };
+
+  const fetchData = async (authToken: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await Promise.all([
+        fetchStudyGroups(authToken),
+        fetchMyStudyGroups(authToken)
+      ]);
+    } catch (error) {
+      setError('Failed to load study groups. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
+      console.error('No token found in localStorage');
+      router.push('/');
+      return;
+    }
+
+    // Basic token validation
+    try {
+      const tokenParts = storedToken.split('.');
+      if (tokenParts.length !== 3) {
+        console.error('Invalid token format');
+        localStorage.removeItem('token');
+        router.push('/');
+        return;
+      }
+
+      const payload = JSON.parse(atob(tokenParts[1]));
+      console.log('JWT Payload:', payload);
+      const expirationTime = payload.exp * 1000; // Convert to milliseconds
+      
+      if (Date.now() >= expirationTime) {
+        console.error('Token has expired');
+        localStorage.removeItem('token');
+        router.push('/');
+        return;
+      }
+
+      setToken(storedToken);
+      localStorage.setItem('userId', payload.sub);
+      fetchData(storedToken);
+    } catch (error) {
+      console.error('Error validating token:', error);
+      localStorage.removeItem('token');
+      router.push('/');
+    }
+  }, [router, fetchData]);
 
   const handleCreateStudyGroup = async (formData: any) => {
     try {

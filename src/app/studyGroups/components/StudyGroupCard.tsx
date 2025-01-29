@@ -5,27 +5,39 @@ import { Card, CardContent, CardHeader, CardFooter } from './Card';
 import { Button } from '@/app/userProfile/components/ui/button';
 import { Users, MapPin, Calendar, Clock, FileText } from 'lucide-react';
 
-interface StudyGroupCardProps {
-  group: {
-    _id: string;
-    name: string;
-    description: string;
-    meetingType: string;
-    meetingDays: string[];
-    meetingLocation: string;
-    meetingTime: string;
-    members: any[];
-    createdBy: {
+interface StudyGroup {
+  _id: string;
+  name: string;
+  description: string;
+  meetingType: string;
+  meetingDays: string[];
+  meetingLocation: string;
+  meetingTime: string;
+  members: Array<{
+    userId: {
+      _id: string;
       firstname: string;
       lastname: string;
+      email: string;
     };
+    role: string;
+  }>;
+  createdBy: {
+    _id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
   };
-  onJoin?: () => void;
-  onLeave?: () => void;
-  isMember?: boolean;
 }
 
-export function StudyGroupCard({ group, onJoin, onLeave, isMember }: StudyGroupCardProps) {
+interface StudyGroupCardProps {
+  group: StudyGroup;
+  isMember: boolean;
+  onJoin?: () => void;
+  onLeave?: () => void;
+}
+
+export function StudyGroupCard({ group, isMember, onJoin, onLeave }: StudyGroupCardProps) {
   return (
     <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
       <CardHeader className="space-y-2 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">

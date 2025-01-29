@@ -8,8 +8,17 @@ import { Label } from '@/app/userProfile/components/ui/label';
 import { Textarea } from '@/app/userProfile/components/ui/textarea';
 import { Users, Calendar, MapPin, Clock, FileText } from 'lucide-react';
 
+interface FormData {
+  name: string;
+  description: string;
+  meetingType: string;
+  meetingDays: string[];
+  meetingLocation: string;
+  meetingTime: string;
+}
+
 interface CreateStudyGroupFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: FormData) => void;
 }
 
 const DAYS_OF_WEEK = [
@@ -47,7 +56,7 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
     );
   };
 
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = (data: FormData) => {
     const formData = {
       ...data,
       meetingDays: selectedDays,

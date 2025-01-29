@@ -1,24 +1,18 @@
 'use client';
 
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
+import { Button } from '@/app/userProfile/components/ui/button';
+import { Monitor, Moon, Laptop } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-export function AuthenticatedNavbar() {
-  const { theme, setTheme } = useTheme();
+const AuthenticatedNavbar = () => {
   const router = useRouter();
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    const name = localStorage.getItem('userName');
-    if (name) setUserName(name);
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
     router.push('/');
   };
 
@@ -71,4 +65,6 @@ export function AuthenticatedNavbar() {
       </div>
     </nav>
   );
-} 
+};
+
+export default AuthenticatedNavbar; 
