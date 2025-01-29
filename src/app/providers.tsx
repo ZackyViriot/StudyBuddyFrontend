@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ThemeProvider } from 'next-themes';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+function ClientThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,4 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {children}
     </ThemeProvider>
   );
-} 
+}
+
+// Export the provider with a more specific name to avoid confusion
+export { ClientThemeProvider as Providers }; 

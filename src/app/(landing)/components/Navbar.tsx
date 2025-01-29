@@ -2,6 +2,7 @@ import { useTheme } from 'next-themes'
 import { Button } from '@/app/userProfile/components/ui/button'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface NavbarProps {
   onLogin: () => void
@@ -11,6 +12,7 @@ interface NavbarProps {
 export function Navbar({ onLogin, onSignup }: NavbarProps) {
   const { theme, setTheme } = useTheme()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
 
   const checkAuth = () => {
     const token = localStorage.getItem('token')
@@ -38,7 +40,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
     setIsAuthenticated(false)
     // Dispatch auth change event
     window.dispatchEvent(new Event('authStateChanged'))
-    window.location.href = '/'
+    router.push('/')
   }
 
   return (
@@ -56,13 +58,13 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Link href="/dashboard">
                 <Button variant="ghost">Dashboard</Button>
               </Link>
-              <Link href="/study-groups">
+              <Link href="/studyGroups">
                 <Button variant="ghost">Study Groups</Button>
               </Link>
               <Link href="/calendar">
                 <Button variant="ghost">Calendar</Button>
               </Link>
-              <Link href="/profile">
+              <Link href="/userProfile">
                 <Button variant="ghost">Profile</Button>
               </Link>
               <Button variant="destructive" onClick={handleLogout}>Logout</Button>
