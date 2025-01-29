@@ -162,12 +162,12 @@ export function ProfileForm() {
         }
 
         const userData = JSON.parse(storedUser);
-        if (!userData.id) {
+        if (!userData._id) {
           handleLogout();
           return;
         }
 
-        const response = await axios.get(`${config.API_URL}/users/${userData.id}`, {
+        const response = await axios.get(`${config.API_URL}/users/${userData._id}`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -345,7 +345,7 @@ export function ProfileForm() {
       if (!checkAuth()) return;
 
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!userData.id) {
+      if (!userData._id) {
         handleLogout();
         return;
       }
@@ -382,7 +382,7 @@ export function ProfileForm() {
 
       // Update the profile data
       const response = await axios.put(
-        `${config.API_URL}/users/${userData.id}`, 
+        `${config.API_URL}/users/${userData._id}`, 
         updateData,
         {
           headers: { 

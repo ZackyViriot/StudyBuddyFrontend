@@ -40,19 +40,35 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
       const response = await axios.post(`${config.API_URL}/auth/login`, {
         email: formData.email,
         password: formData.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
       });
 
       if (response.data.access_token) {
         localStorage.setItem('token', response.data.access_token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
         window.dispatchEvent(new Event('authStateChanged'));
         onClose();
         router.push('/userProfile');
+      } else {
+        throw new Error('No access token received');
       }
     } catch (error: unknown) {
       const err = error as LoginError;
       console.error('Login failed:', err);
-      setError(err.response?.data?.message || 'Failed to log in. Please try again.');
+      
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message === 'Network Error') {
+        setError('Unable to connect to the server. Please check your internet connection.');
+      } else {
+        setError('Failed to log in. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

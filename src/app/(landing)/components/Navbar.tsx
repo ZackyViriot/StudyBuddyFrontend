@@ -3,6 +3,7 @@ import { Button } from '@/app/userProfile/components/ui/button'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sun, MoonStar } from 'lucide-react'
 
 interface NavbarProps {
   onLogin: () => void
@@ -44,13 +45,23 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
   }
 
   return (
-    <nav className="w-full border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-50">
+    <nav className="w-full border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-40">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold hover:opacity-80">StudyBuddy</Link>
         
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? '🌞' : '🌙'}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="rounded-full w-9 h-9 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            ) : (
+              <MoonStar className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            )}
+            <span className="sr-only">Toggle theme</span>
           </Button>
 
           {isAuthenticated ? (
