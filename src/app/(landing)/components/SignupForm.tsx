@@ -98,7 +98,13 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         console.log('Sending user data:', userData);
         
         // Create user
-        const response = await axios.post(`${config.API_URL}/users`, userData);
+        const response = await axios.post(`${config.API_URL}/users`, userData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: true
+        });
 
         if (response.data) {
           console.log('User created successfully, attempting login');
@@ -106,6 +112,12 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
           const loginResponse = await axios.post(`${config.API_URL}/auth/login`, {
             email: formData.email,
             password: formData.password
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            withCredentials: true
           });
 
           if (loginResponse.data.access_token) {

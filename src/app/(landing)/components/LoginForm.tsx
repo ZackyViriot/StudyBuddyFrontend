@@ -44,7 +44,8 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        }
+        },
+        withCredentials: true
       });
 
       if (response.data.access_token) {

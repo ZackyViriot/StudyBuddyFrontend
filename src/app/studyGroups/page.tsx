@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { StudyGroupCard } from './components/StudyGroupCard';
+import { StudyGroupTable } from './components/StudyGroupTable';
 import { CreateStudyGroupForm } from './components/CreateStudyGroupForm';
 import {
   Dialog,
@@ -11,11 +11,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './components/Dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/Tabs';
-import { Navbar } from '@/app/(landing)/components/Navbar';
+import { Button } from '@/components/ui/button';
+import { Plus, Users, Search } from 'lucide-react';
 import { config } from '@/config';
-import { Plus } from 'lucide-react';
-import { Button } from '@/app/userProfile/components/ui/button';
+import { Navbar } from '@/app/(landing)/components/Navbar';
+import { Card, CardHeader, CardContent } from '@/app/userProfile/components/ui/card';
+import { Input } from '@/app/userProfile/components/ui/input';
 
 interface StudyGroup {
   _id: string;
@@ -59,6 +60,8 @@ export default function StudyGroupsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [myGroupsSearch, setMyGroupsSearch] = useState('');
+  const [allGroupsSearch, setAllGroupsSearch] = useState('');
 
   const fetchStudyGroups = useCallback(async (authToken: string) => {
     try {
@@ -157,7 +160,6 @@ export default function StudyGroupsPage() {
       return;
     }
 
-    // Basic token validation
     try {
       const tokenParts = storedToken.split('.');
       if (tokenParts.length !== 3) {
@@ -168,8 +170,7 @@ export default function StudyGroupsPage() {
       }
 
       const payload = JSON.parse(atob(tokenParts[1]));
-      console.log('JWT Payload:', payload);
-      const expirationTime = payload.exp * 1000; // Convert to milliseconds
+      const expirationTime = payload.exp * 1000;
       
       if (Date.now() >= expirationTime) {
         console.error('Token has expired');
@@ -253,7 +254,7 @@ export default function StudyGroupsPage() {
   const handleLeaveGroup = async (groupId: string) => {
     try {
       const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/leave`, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -272,43 +273,61 @@ export default function StudyGroupsPage() {
     }
   };
 
-  const isUserInGroup = (group: StudyGroup) => {
+  const isUserInGroup = useCallback((group: StudyGroup) => {
     const userId = localStorage.getItem('userId');
     return group.members.some(member => member.userId._id === userId);
+  }, []);
+
+  const filterGroups = (groups: StudyGroup[], searchTerm: string) => {
+    if (!searchTerm.trim()) return groups;
+    const lowerSearch = searchTerm.toLowerCase();
+    return groups.filter(group => 
+      group.name.toLowerCase().includes(lowerSearch) ||
+      group.description.toLowerCase().includes(lowerSearch) ||
+      group.meetingType.toLowerCase().includes(lowerSearch) ||
+      group.meetingLocation.toLowerCase().includes(lowerSearch)
+    );
   };
 
-  if (!token) {
-    return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950">
+        <Navbar onLogin={() => {}} onSignup={() => {}} />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950">
       <Navbar onLogin={() => {}} onSignup={() => {}} />
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 relative z-50">
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
               Study Groups
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
               Join or create study groups to collaborate with fellow students
             </p>
           </div>
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                className="relative overflow-hidden group bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600 text-white px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <div className="absolute inset-0 bg-white/20 dark:bg-black/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                <span className="flex items-center gap-2 text-lg font-semibold relative z-10">
-                  <Plus className="w-6 h-6" strokeWidth={2.5} />
+              <Button className="relative overflow-hidden group bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                <span className="flex items-center gap-2 text-sm font-semibold relative z-10">
+                  <Plus className="h-5 w-5" />
                   Create Study Group
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+                <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
                   Create a New Study Group
                 </DialogTitle>
               </DialogHeader>
@@ -318,78 +337,132 @@ export default function StudyGroupsPage() {
         </div>
 
         {error && (
-          <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg relative mb-6" role="alert">
-            <span className="block sm:inline">{error}</span>
+          <div className="mb-6 p-4 bg-red-100/90 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 rounded-lg backdrop-blur-sm">
+            {error}
           </div>
         )}
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* My Study Groups Section */}
+          <div className="lg:sticky lg:top-4 h-fit">
+            <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                    <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                      My Study Groups
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Groups you're currently part of
+                    </p>
+                  </div>
+                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
+                    {myGroups.length} groups
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="mb-4">
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search my study groups..."
+                      value={myGroupsSearch}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setMyGroupsSearch(e.target.value)}
+                      className="pl-10 bg-white/50 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm focus:border-indigo-600/50 dark:focus:border-indigo-500/50"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  </div>
+                </div>
+                {myGroups.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4 flex justify-center">
+                      <div className="p-3 rounded-full bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                        <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                      You haven't joined any study groups yet
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Join one from the 'All Study Groups' section!
+                    </p>
+                  </div>
+                ) : (
+                  <StudyGroupTable
+                    groups={filterGroups(myGroups, myGroupsSearch)}
+                    isMemberMap={Object.fromEntries(myGroups.map(group => [group._id, true]))}
+                    onJoin={handleJoinGroup}
+                    onLeave={handleLeaveGroup}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg transition-colors duration-200">
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 dark:bg-gray-700/50 rounded-t-xl">
-                <TabsTrigger 
-                  value="all"
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-3 text-gray-600 dark:text-gray-300 transition-all duration-200"
-                >
-                  All Groups
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="my-groups"
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-3 text-gray-600 dark:text-gray-300 transition-all duration-200"
-                >
-                  My Groups
-                </TabsTrigger>
-              </TabsList>
-              <div className="p-6">
-                <TabsContent value="all">
-                  {allGroups.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        No study groups available. Be the first to create one!
-                      </p>
+
+          {/* All Study Groups Section */}
+          <div>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                    <Search className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                      All Study Groups
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Discover and join study groups
+                    </p>
+                  </div>
+                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
+                    {allGroups.length} groups
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="mb-4">
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search all study groups..."
+                      value={allGroupsSearch}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setAllGroupsSearch(e.target.value)}
+                      className="pl-10 bg-white/50 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm focus:border-indigo-600/50 dark:focus:border-indigo-500/50"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  </div>
+                </div>
+                {allGroups.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4 flex justify-center">
+                      <div className="p-3 rounded-full bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                        <Plus className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                      </div>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {allGroups.map((group) => (
-                        <StudyGroupCard
-                          key={group._id}
-                          group={group}
-                          isMember={isUserInGroup(group)}
-                          onJoin={() => handleJoinGroup(group._id)}
-                          onLeave={() => handleLeaveGroup(group._id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="my-groups">
-                  {myGroups.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        You haven&apos;t joined any study groups yet. Join one from the &apos;All Groups&apos; tab!
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {myGroups.map((group) => (
-                        <StudyGroupCard
-                          key={group._id}
-                          group={group}
-                          isMember={true}
-                          onLeave={() => handleLeaveGroup(group._id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              </div>
-            </Tabs>
+                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                      No study groups available
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Be the first to create one!
+                    </p>
+                  </div>
+                ) : (
+                  <StudyGroupTable
+                    groups={filterGroups(allGroups, allGroupsSearch)}
+                    isMemberMap={Object.fromEntries(allGroups.map(group => [group._id, isUserInGroup(group)]))}
+                    onJoin={handleJoinGroup}
+                    onLeave={handleLeaveGroup}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
