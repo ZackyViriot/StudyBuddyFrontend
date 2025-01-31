@@ -377,7 +377,7 @@ export default function StudyGroupsPage() {
                       My Study Groups
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Groups you're a member of
+                      Groups you&apos;re a member of
                     </p>
                   </div>
                   <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
