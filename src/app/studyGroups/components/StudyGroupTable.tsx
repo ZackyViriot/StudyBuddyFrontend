@@ -58,6 +58,8 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [selectedGroup, setSelectedGroup] = useState<StudyGroup | null>(null);
+  const [showMembersGroup, setShowMembersGroup] = useState<StudyGroup | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -87,110 +89,151 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
     return sortOrder === 'asc' ? comparison : -comparison;
   });
 
+  // Filter groups based on search query
+  const filteredGroups = sortedGroups.filter(group => 
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.members.some(member => 
+      `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  // Filter members in the members dialog using the same search query
+  const filteredMembers = showMembersGroup?.members.filter(member =>
+    !searchQuery || 
+    `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <>
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50 dark:bg-gray-700/50">
-              <TableHead className="w-[250px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('name')}
-                  className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
-                >
-                  Group Name
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[300px]">
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">Description</span>
-              </TableHead>
-              <TableHead className="w-[120px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('members')}
-                  className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
-                >
-                  Members
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[150px]">
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">Meeting Info</span>
-              </TableHead>
-              <TableHead className="w-[120px] text-right">
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedGroups.map((group) => (
-              <TableRow 
-                key={group._id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <TableCell>
-                  <div>
-                    <div className="font-semibold text-gray-900 dark:text-white">
-                      {group.name}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                      <span>by</span>
-                      <span className="font-medium text-indigo-600 dark:text-indigo-400">
-                        {group.createdBy.firstname} {group.createdBy.lastname}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                    {group.description}
-                  </p>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
-                      <Users className="h-3 w-3 mr-1" />
-                      {group.members.length}
-                    </Badge>
-                  </div>
-                </TableCell>
-                <TableCell>
+      <div className="space-y-4">
+        {/* Search input for everything */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search groups or members by name..."
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Users className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 dark:bg-gray-700/50">
+                <TableHead className="w-[250px]">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-                    onClick={() => setSelectedGroup(group)}
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
                   >
-                    <Info className="h-4 w-4 mr-1" />
-                    View Details
+                    Group Name
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
-                </TableCell>
-                <TableCell className="text-right">
-                  {isMemberMap[group._id] ? (
-                    <Button
-                      onClick={() => onLeave(group._id)}
-                      variant="destructive"
-                      size="sm"
-                      className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-                    >
-                      Leave
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => onJoin(group._id)}
-                      size="sm"
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-                    >
-                      Join
-                    </Button>
-                  )}
-                </TableCell>
+                </TableHead>
+                <TableHead className="w-[300px]">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">Description</span>
+                </TableHead>
+                <TableHead className="w-[120px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('members')}
+                    className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
+                  >
+                    Members
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">Meeting Info</span>
+                </TableHead>
+                <TableHead className="w-[120px] text-right">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">Actions</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredGroups.map((group) => (
+                <TableRow 
+                  key={group._id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <TableCell>
+                    <div>
+                      <div className="font-semibold text-gray-900 dark:text-white">
+                        {group.name}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <span>by</span>
+                        <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                          {group.createdBy.firstname} {group.createdBy.lastname}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                      {group.description}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 cursor-pointer transition-colors"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setShowMembersGroup(group);
+                        }}
+                      >
+                        <Users className="h-3 w-3 mr-1" />
+                        {group.members.length}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                      onClick={() => setSelectedGroup(group)}
+                    >
+                      <Info className="h-4 w-4 mr-1" />
+                      View Details
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {isMemberMap[group._id] ? (
+                      <Button
+                        onClick={() => onLeave(group._id)}
+                        variant="destructive"
+                        size="sm"
+                        className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+                      >
+                        Leave
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => onJoin(group._id)}
+                        size="sm"
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                      >
+                        Join
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <Dialog open={!!selectedGroup} onOpenChange={() => setSelectedGroup(null)}>
@@ -291,14 +334,68 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                           {member.userId.firstname} {member.userId.lastname}
                         </div>
                       </div>
-                      <Badge className="ml-auto bg-indigo-100/80 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
-                        {member.role === 'admin' ? 'Admin' : 'Member'}
-                      </Badge>
+                      {member.role === 'admin' ? (
+                        <Badge className="ml-auto bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                          Admin
+                        </Badge>
+                      ) : (
+                        <Badge className="ml-auto bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                          Member
+                        </Badge>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Members List Dialog */}
+      <Dialog open={!!showMembersGroup} onOpenChange={() => setShowMembersGroup(null)}>
+        <DialogContent className="sm:max-w-[500px] p-6 dark:bg-gray-800/95 dark:backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              Members of {showMembersGroup?.name}
+              <Badge className="ml-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                {showMembersGroup?.members.length} total
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-3 h-[460px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-indigo-200 dark:scrollbar-thumb-indigo-800 scrollbar-track-transparent">
+            {filteredMembers?.map((member) => (
+              <div 
+                key={member.userId._id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/20 border border-indigo-100 dark:border-indigo-800"
+              >
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                  {member.userId.firstname[0]}{member.userId.lastname[0]}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {member.userId.firstname} {member.userId.lastname}
+                  </div>
+                </div>
+                {member.role === 'admin' ? (
+                  <Badge className="ml-auto bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                    Admin
+                  </Badge>
+                ) : (
+                  <Badge className="ml-auto bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                    Member
+                  </Badge>
+                )}
+              </div>
+            ))}
+            {filteredMembers?.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <Users className="h-8 w-8 mb-2" />
+                <p>No members found</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

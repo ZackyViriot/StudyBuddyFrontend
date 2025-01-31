@@ -60,8 +60,7 @@ export default function StudyGroupsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [myGroupsSearch, setMyGroupsSearch] = useState('');
-  const [allGroupsSearch, setAllGroupsSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchStudyGroups = useCallback(async (authToken: string) => {
     try {
@@ -278,16 +277,25 @@ export default function StudyGroupsPage() {
     return group.members.some(member => member.userId._id === userId);
   }, []);
 
-  const filterGroups = (groups: StudyGroup[], searchTerm: string) => {
-    if (!searchTerm.trim()) return groups;
-    const lowerSearch = searchTerm.toLowerCase();
-    return groups.filter(group => 
-      group.name.toLowerCase().includes(lowerSearch) ||
-      group.description.toLowerCase().includes(lowerSearch) ||
-      group.meetingType.toLowerCase().includes(lowerSearch) ||
-      group.meetingLocation.toLowerCase().includes(lowerSearch)
-    );
-  };
+  const filteredMyGroups = myGroups.filter(group => 
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.members.some(member => 
+      `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  const filteredAllGroups = allGroups.filter(group => 
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.meetingLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.members.some(member => 
+      `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   if (isLoading) {
     return (
@@ -342,6 +350,19 @@ export default function StudyGroupsPage() {
           </div>
         )}
 
+        <div className="mb-8 relative">
+          <input
+            type="text"
+            placeholder="Search all study groups..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search className="h-5 w-5" />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* My Study Groups Section */}
           <div className="lg:sticky lg:top-4 h-fit">
@@ -356,49 +377,21 @@ export default function StudyGroupsPage() {
                       My Study Groups
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Groups you're currently part of
+                      Groups you're a member of
                     </p>
                   </div>
-                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
-                    {myGroups.length} groups
+                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
+                    {filteredMyGroups.length} groups
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="mb-4">
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      placeholder="Search my study groups..."
-                      value={myGroupsSearch}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setMyGroupsSearch(e.target.value)}
-                      className="pl-10 bg-white/50 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm focus:border-indigo-600/50 dark:focus:border-indigo-500/50"
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  </div>
-                </div>
-                {myGroups.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="mb-4 flex justify-center">
-                      <div className="p-3 rounded-full bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
-                        <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
-                      You haven't joined any study groups yet
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Join one from the 'All Study Groups' section!
-                    </p>
-                  </div>
-                ) : (
-                  <StudyGroupTable
-                    groups={filterGroups(myGroups, myGroupsSearch)}
-                    isMemberMap={Object.fromEntries(myGroups.map(group => [group._id, true]))}
-                    onJoin={handleJoinGroup}
-                    onLeave={handleLeaveGroup}
-                  />
-                )}
+              <CardContent>
+                <StudyGroupTable
+                  groups={filteredMyGroups}
+                  isMemberMap={Object.fromEntries(myGroups.map(group => [group._id, true]))}
+                  onJoin={handleJoinGroup}
+                  onLeave={handleLeaveGroup}
+                />
               </CardContent>
             </Card>
           </div>
@@ -420,45 +413,17 @@ export default function StudyGroupsPage() {
                     </p>
                   </div>
                   <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
-                    {allGroups.length} groups
+                    {filteredAllGroups.length} groups
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="mb-4">
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      placeholder="Search all study groups..."
-                      value={allGroupsSearch}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setAllGroupsSearch(e.target.value)}
-                      className="pl-10 bg-white/50 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm focus:border-indigo-600/50 dark:focus:border-indigo-500/50"
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  </div>
-                </div>
-                {allGroups.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="mb-4 flex justify-center">
-                      <div className="p-3 rounded-full bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
-                        <Plus className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
-                      No study groups available
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Be the first to create one!
-                    </p>
-                  </div>
-                ) : (
-                  <StudyGroupTable
-                    groups={filterGroups(allGroups, allGroupsSearch)}
-                    isMemberMap={Object.fromEntries(allGroups.map(group => [group._id, isUserInGroup(group)]))}
-                    onJoin={handleJoinGroup}
-                    onLeave={handleLeaveGroup}
-                  />
-                )}
+              <CardContent>
+                <StudyGroupTable
+                  groups={filteredAllGroups}
+                  isMemberMap={Object.fromEntries(allGroups.map(group => [group._id, isUserInGroup(group)]))}
+                  onJoin={handleJoinGroup}
+                  onLeave={handleLeaveGroup}
+                />
               </CardContent>
             </Card>
           </div>
