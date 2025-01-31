@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { StudyGroupTable } from './components/StudyGroupTable';
 import { CreateStudyGroupForm } from './components/CreateStudyGroupForm';
@@ -16,7 +16,6 @@ import { Plus, Users, Search } from 'lucide-react';
 import { config } from '@/config';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 import { Card, CardHeader, CardContent } from '@/app/userProfile/components/ui/card';
-import { Input } from '@/app/userProfile/components/ui/input';
 
 interface StudyGroup {
   _id: string;
