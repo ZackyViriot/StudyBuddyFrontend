@@ -309,6 +309,7 @@ export function ProfileForm() {
     try {
       const compressedImage = await compressImage(file);
       setProfile(prev => ({ ...prev, profilePicture: compressedImage }));
+      setHasChanges(true);
       setError(null);
     } catch (error) {
       console.error('Failed to process image:', error);

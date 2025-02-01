@@ -31,6 +31,7 @@ interface StudyGroup {
       firstname: string;
       lastname: string;
       email: string;
+      profilePicture: string;
     };
     role: string;
   }>;
@@ -39,6 +40,7 @@ interface StudyGroup {
     firstname: string;
     lastname: string;
     email: string;
+    profilePicture: string;
   };
 }
 
@@ -249,26 +251,86 @@ export default function StudyGroupsPage() {
     }
   };
 
-  const handleLeaveGroup = async (groupId: string) => {
+  const getUserIdFromToken = (token: string | null): string | null => {
+    if (!token) return null;
     try {
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/leave`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) return null;
+      const payload = JSON.parse(atob(tokenParts[1]));
+      return payload.sub || null;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to leave group');
+  const getUserRoleInGroup = (group: StudyGroup, userId: string | null): string | null => {
+    if (!userId || !group) return null;
+    const member = group.members.find(member => member.userId._id.toString() === userId.toString());
+    return member ? member.role : null;
+  };
+
+  const handleLeaveGroup = async (groupId: string) => {
+    let mounted = true;
+    
+    try {
+      const group = allGroups.find(g => g._id === groupId);
+      if (!group) {
+        throw new Error('Group not found');
       }
 
-      await fetchData(token!);
+      const storedToken = localStorage.getItem('token');
+      const userIdFromToken = getUserIdFromToken(storedToken);
+      
+      if (!storedToken || !userIdFromToken) {
+        throw new Error('No authentication token found');
+      }
+
+      const userRole = getUserRoleInGroup(group, userIdFromToken);
+      const isAdmin = userRole === 'admin';
+
+      if (isAdmin) {
+        const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${storedToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to delete group');
+        }
+      } else {
+        const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/leave`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${storedToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to leave group');
+        }
+      }
+
+      // Only update state if component is still mounted
+      if (mounted) {
+        await fetchData(storedToken);
+      }
     } catch (error) {
-      console.error('Error leaving study group:', error);
-      setError(error instanceof Error ? error.message : 'Failed to leave group');
+      console.error('Error leaving/deleting study group:', error);
+      if (mounted) {
+        setError(error instanceof Error ? error.message : 'Failed to leave/delete group');
+      }
     }
+
+    return () => {
+      mounted = false;
+    };
   };
 
   const isUserInGroup = useCallback((group: StudyGroup) => {
