@@ -1,14 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, MapPin, Calendar, Clock, ArrowUpDown, Info, BookOpen, UserCircle, User, FileText, School } from 'lucide-react';
@@ -160,12 +152,6 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
     group.members.some(member => 
       `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  );
-
-  // Filter members in the members dialog using the same search query
-  const filteredMembers = showMembersGroup?.members.filter(member =>
-    !searchQuery || 
-    `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getUserIdFromToken = (token: string | null): string | null => {
@@ -574,7 +560,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
             {selectedMember?.bio && (
               <div className="text-center px-4">
                 <p className="text-gray-600 dark:text-gray-300 text-sm italic">
-                  "{selectedMember.bio}"
+                  &ldquo;{selectedMember.bio}&rdquo;
                 </p>
               </div>
             )}
@@ -691,8 +677,8 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
           <div className="py-4">
             <p className="text-gray-600 dark:text-gray-300">
               {confirmationDialog.action === 'delete' 
-                ? `Are you sure you want to delete "${confirmationDialog.groupName}"? This action cannot be undone.`
-                : `Are you sure you want to leave "${confirmationDialog.groupName}"? You can always join back later.`
+                ? `Are you sure you want to delete &ldquo;${confirmationDialog.groupName}&rdquo;? This action cannot be undone.`
+                : `Are you sure you want to leave &ldquo;${confirmationDialog.groupName}&rdquo;? You can always join back later.`
               }
             </p>
           </div>
