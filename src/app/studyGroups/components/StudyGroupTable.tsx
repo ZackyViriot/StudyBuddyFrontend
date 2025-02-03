@@ -439,42 +439,87 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
 
             {/* Right Panel - Members */}
             <div className="flex-1 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700">
-              <div className="p-6 h-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+              <div className="p-6 h-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm flex flex-col">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  Members
+                  Members ({selectedGroup?.members.length})
                 </h3>
-                <div className="grid grid-cols-1 gap-3 overflow-y-auto max-h-[calc(600px-120px)]">
-                  {selectedGroup?.members.map((member) => (
-                    <div 
-                      key={member.userId._id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/20 border border-indigo-100 dark:border-indigo-800 hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => fetchUserProfile(member.userId._id)}
-                    >
-                      <ProfilePicture 
-                        src={getProfilePictureUrl(member.userId.profilePicture)}
-                        name={`${member.userId.firstname} ${member.userId.lastname}`}
-                        size={40}
-                      />
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
-                          {member.userId.firstname} {member.userId.lastname}
+                <div className="flex-1 overflow-y-auto min-h-0">
+                  <div className="grid grid-cols-1 gap-3">
+                    {selectedGroup?.members.map((member) => (
+                      <div 
+                        key={member.userId._id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/20 border border-indigo-100 dark:border-indigo-800 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => fetchUserProfile(member.userId._id)}
+                      >
+                        <ProfilePicture 
+                          src={getProfilePictureUrl(member.userId.profilePicture)}
+                          name={`${member.userId.firstname} ${member.userId.lastname}`}
+                          size={40}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {member.userId.firstname} {member.userId.lastname}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {member.userId.email}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {member.userId.email}
-                        </div>
+                        {member.role === 'admin' ? (
+                          <Badge className="ml-auto bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                            Admin
+                          </Badge>
+                        ) : (
+                          <Badge className="ml-auto bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                            Member
+                          </Badge>
+                        )}
                       </div>
-                      {member.role === 'admin' ? (
-                        <Badge className="ml-auto bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
-                          Admin
-                        </Badge>
-                      ) : (
-                        <Badge className="ml-auto bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
-                          Member
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  {isMemberMap[selectedGroup?._id || ''] ? (
+                    <Button
+                      onClick={() => {
+                        setConfirmationDialog({
+                          isOpen: true,
+                          groupId: selectedGroup?._id || '',
+                          action: isCreator(selectedGroup!) ? 'delete' : 'leave',
+                          groupName: selectedGroup?.name || ''
+                        });
+                        setSelectedGroup(null);
+                      }}
+                      variant="destructive"
+                      className={`w-full ${
+                        isCreator(selectedGroup!) 
+                          ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+                          : "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {isCreator(selectedGroup!) ? (
+                          <>Delete Group</>
+                        ) : (
+                          <>Leave Group</>
+                        )}
+                      </span>
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        onJoin(selectedGroup?._id || '');
+                        setSelectedGroup(null);
+                      }}
+                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                    >
+                      <span className="flex items-center gap-2">
+                        Join Group
+                      </span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
