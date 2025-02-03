@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Team } from '@/types/team';
+import { Team, User } from '@/types/team';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 
 interface TeamMembersDialogProps {
@@ -16,12 +16,12 @@ export const TeamMembersDialog: React.FC<TeamMembersDialogProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
 
   if (!team) return null;
 
-  const handleUserClick = (user: any) => {
+  const handleUserClick = (user: User) => {
     const completeUser = {
       _id: user._id,
       firstname: user.firstname,

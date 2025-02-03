@@ -32,7 +32,7 @@ export const DeleteTeamDialog: React.FC<DeleteTeamDialogProps> = ({
             <DialogTitle className="text-xl font-bold">Delete Team</DialogTitle>
           </div>
           <DialogDescription className="pt-4 text-gray-600 dark:text-gray-300">
-            Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">"{teamName}"</span>? 
+            Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">&ldquo;{teamName}&rdquo;</span>? 
             This action cannot be undone and all team data will be permanently lost.
           </DialogDescription>
         </DialogHeader>

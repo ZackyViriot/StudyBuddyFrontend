@@ -1,28 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Info, Users, LogOut, Trash2 } from 'lucide-react';
 import { TeamDetailsDialog } from './TeamDetailsDialog';
 import { TeamMembersDialog } from './TeamMembersDialog';
 import { DeleteTeamDialog } from './DeleteTeamDialog';
 import { Team } from '@/types/team';
-
-interface TeamMember {
-  userId?: {
-    _id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    profilePicture: string;
-  };
-  _id?: string;
-  firstname?: string;
-  lastname?: string;
-  email?: string;
-  profilePicture?: string;
-  role: string;
-}
 
 interface TeamTableProps {
   teams: Team[];
@@ -45,31 +29,6 @@ export const TeamTable: React.FC<TeamTableProps> = ({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-  const getUserRole = (team: Team) => {
-    // Check if user is the creator (always admin) or has admin role
-    if (team.createdBy._id === currentUserId || 
-        team.members.some(m => m.userId?._id === currentUserId && m.role === 'admin')) {
-      return 'Admin';
-    }
-
-    // Find user's role in team members
-    const member = team.members?.find(m => m?.userId?._id === currentUserId);
-    if (!member) return 'Member';
-
-    // Capitalize first letter of role
-    return member.role.charAt(0).toUpperCase() + member.role.slice(1);
-  };
-
-  const isUserInTeam = (team: Team) => {
-    return team.createdBy._id === currentUserId || 
-           team.members.some(m => m.userId?._id === currentUserId);
-  };
-
-  const isUserAdmin = (team: Team) => {
-    return team.createdBy._id === currentUserId || 
-           team.members.some(m => m.userId?._id === currentUserId && m.role === 'admin');
-  };
 
   const handleViewDetails = (team: Team) => {
     setSelectedTeam(team);
@@ -111,9 +70,9 @@ export const TeamTable: React.FC<TeamTableProps> = ({
           </TableHeader>
           <TableBody>
             {teams.map((team) => {
-              const userRole = team.members.find((m: any) => m.userId._id === currentUserId)?.role || 'none';
+              const userRole = team.members.find((m) => m.userId?._id === currentUserId)?.role || 'none';
               const isAdmin = userRole === 'admin' || team.createdBy._id === currentUserId;
-              const activeTasks = team.tasks.filter((task: any) => task.status !== 'completed').length;
+              const activeTasks = team.tasks.filter((task) => task.status !== 'completed').length;
 
               return (
                 <TableRow key={team._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/30">
