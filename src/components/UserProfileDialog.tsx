@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { User } from '@/types/team';
+import { User } from '@/types/user';
 import { Mail, User as UserIcon } from 'lucide-react';
 
 interface UserProfileDialogProps {

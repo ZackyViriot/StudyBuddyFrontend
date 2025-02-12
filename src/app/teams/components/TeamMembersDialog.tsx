@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Team, User } from '@/types/team';
+import { Team } from '@/types/team';
+import { User } from '@/types/user';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 
 interface TeamMembersDialogProps {
@@ -27,7 +28,8 @@ export const TeamMembersDialog: React.FC<TeamMembersDialogProps> = ({
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
+      role: user.role || 'user'
     };
     setSelectedUser(completeUser);
     setIsUserProfileOpen(true);

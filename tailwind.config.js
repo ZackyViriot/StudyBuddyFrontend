@@ -14,6 +14,9 @@ module.exports = {
         background: 'var(--background)',
         text: 'var(--text)',
       },
+      fontFamily: {
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],
