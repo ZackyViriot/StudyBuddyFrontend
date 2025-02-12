@@ -34,7 +34,7 @@ export default function SignUp() {
     }
 
     try {
-      const response = await fetch(`${config.API_URL}/api/auth/register`, {
+      const response = await fetch(`${config.API_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export default function SignUp() {
       }
 
       // Automatically log in the user after successful registration
-      const loginResponse = await fetch(`${config.API_URL}/api/auth/login`, {
+      const loginResponse = await fetch(`${config.API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

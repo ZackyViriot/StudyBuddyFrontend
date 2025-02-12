@@ -38,7 +38,7 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
     setError(null);
 
     try {
-      const response = await axios.post(`${config.API_URL}/api/auth/login`, {
+      const response = await axios.post(`${config.API_URL}/auth/login`, {
         email: formData.email,
         password: formData.password
       }, {

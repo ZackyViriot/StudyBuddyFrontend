@@ -132,7 +132,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
       console.log('Making request with token');
       
-      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
+      const response = await fetch(`${config.API_URL}/teams/${teamId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -377,7 +377,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`${config.API_URL}/api/teams/${teamId}/tasks/${taskId}`, {
+      const response = await fetch(`${config.API_URL}/teams/${teamId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -98,18 +98,17 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         console.log('Sending user data:', userData);
         
         // Create user
-        const response = await axios.post(`${config.API_URL}/users`, userData, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
+        const response = await axios.post(`${config.API_URL}/auth/signup`, {
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstname,
+          lastName: formData.lastname
         });
 
         if (response.data) {
           console.log('User created successfully, attempting login');
           // Automatically log in after successful signup
-          const loginResponse = await axios.post(`${config.API_URL}/api/auth/login`, {
+          const loginResponse = await axios.post(`${config.API_URL}/auth/login`, {
             email: formData.email,
             password: formData.password
           }, {

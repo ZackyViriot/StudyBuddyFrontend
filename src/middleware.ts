@@ -5,20 +5,23 @@ export function middleware(request: NextRequest) {
   // Get the pathname of the request
   const path = request.nextUrl.pathname
 
+  // Skip middleware for API routes
+  if (path.startsWith('/api')) {
+    return NextResponse.next()
+  }
+
   // Define public paths that don't require authentication
   const isPublicPath = path === '/' || 
     path === '/auth/signin' || 
     path === '/auth/signup' || 
     path.startsWith('/_next') || 
-    path.startsWith('/api/auth') ||
     path.startsWith('/public')
-
-  // Get the token from the authorization header
-  const authHeader = request.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '') || ''
 
   // Check if we're already on the signin page
   const isSignInPage = path === '/auth/signin'
+
+  // Get token from authorization header (set by axios interceptor)
+  const token = request.headers.get('authorization')?.replace('Bearer ', '') || ''
 
   // If we're on the signin page and have a token, redirect to teams
   if (isSignInPage && token) {
@@ -44,7 +47,8 @@ export const config = {
      * 2. _next/image (image optimization files)
      * 3. favicon.ico (favicon file)
      * 4. public folder
+     * 5. api routes
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 } 

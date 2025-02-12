@@ -3,10 +3,10 @@ import axios from 'axios';
 const getApiUrl = () => {
   // Check if we're in development mode
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:8000';
+    return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api';
   }
   // Production URL
-  return 'https://studybuddybackend-production.up.railway.app';
+  return (process.env.NEXT_PUBLIC_API_URL || 'https://studybuddybackend-production.up.railway.app') + '/api';
 };
 
 export const getFrontendUrl = () => {
