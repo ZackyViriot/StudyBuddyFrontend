@@ -1,19 +1,22 @@
+'use client';
+
 import { useTheme } from 'next-themes'
-import { Button } from '@/app/userProfile/components/ui/button'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sun, MoonStar } from 'lucide-react'
 
 interface NavbarProps {
-  onLogin: () => void
-  onSignup: () => void
+  onLogin?: () => void;
+  onSignup?: () => void;
 }
 
 export function Navbar({ onLogin, onSignup }: NavbarProps) {
   const { theme, setTheme } = useTheme()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   const checkAuth = () => {
     const token = localStorage.getItem('token')
@@ -21,6 +24,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
   }
 
   useEffect(() => {
+    setMounted(true)
     // Initial check
     checkAuth()
 
@@ -43,6 +47,9 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
     window.dispatchEvent(new Event('authStateChanged'))
     router.push('/')
   }
+
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!mounted) return null
 
   return (
     <nav className="w-full border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-40">
@@ -69,6 +76,9 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Link href="/dashboard">
                 <Button variant="ghost">Dashboard</Button>
               </Link>
+              <Link href="/teams">
+                <Button variant="ghost">Teams</Button>
+              </Link>
               <Link href="/studyGroups">
                 <Button variant="ghost">Study Groups</Button>
               </Link>
@@ -83,7 +93,7 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
           ) : (
             <>
               <Button variant="ghost" onClick={onLogin}>Login</Button>
-              <Button onClick={onSignup}>Sign Up</Button>
+              <Button variant="default" onClick={onSignup}>Sign up</Button>
             </>
           )}
         </div>

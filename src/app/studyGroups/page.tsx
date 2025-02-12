@@ -266,7 +266,7 @@ export default function StudyGroupsPage() {
 
   const getUserRoleInGroup = (group: StudyGroup, userId: string | null): string | null => {
     if (!userId || !group) return null;
-    const member = group.members.find(member => member.userId._id.toString() === userId.toString());
+    const member = group.members.find(member => member.userId && member.userId._id.toString() === userId.toString());
     return member ? member.role : null;
   };
 
@@ -335,7 +335,7 @@ export default function StudyGroupsPage() {
 
   const isUserInGroup = useCallback((group: StudyGroup) => {
     const userId = localStorage.getItem('userId');
-    return group.members.some(member => member.userId._id === userId);
+    return group.members.some(member => member.userId && member.userId._id === userId);
   }, []);
 
   const filteredMyGroups = myGroups.filter(group => 

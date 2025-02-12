@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   // Check if we're in development mode
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:8000';
@@ -9,7 +9,7 @@ const getBaseUrl = () => {
   return 'https://studybuddybackend-production.up.railway.app';
 };
 
-const getFrontendUrl = () => {
+export const getFrontendUrl = () => {
   // Check if we're in development mode
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:3000';

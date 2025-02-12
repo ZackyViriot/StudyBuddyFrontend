@@ -1,37 +1,42 @@
-export interface User {
-  _id: string;
-  firstname: string;
-  lastname: string;
-  email: string;
-  profilePicture: string;
-}
+import { User } from './user';
 
 export interface TeamMember {
   userId: User;
-  role: string;
+  role: 'admin' | 'moderator' | 'member';
+  joinedAt?: Date;
 }
 
 export interface TeamGoal {
+  _id?: string;
   title: string;
   description?: string;
   targetDate: Date;
   status: 'active' | 'achieved';
+  progress?: number;
 }
 
 export interface TeamTask {
-  _id: string;
+  _id?: string;
   title: string;
-  status: string;
-  dueDate: string;
-  assignedTo?: User;
+  description?: string;
+  dueDate: Date;
+  status: 'pending' | 'in_progress' | 'completed';
+  assignedTo: User | User[];
+  progress?: number;
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface Team {
   _id: string;
   name: string;
   description?: string;
-  members: TeamMember[];
-  goals?: TeamGoal[];
-  tasks: TeamTask[];
   createdBy: User;
+  members: TeamMember[];
+  goals: TeamGoal[];
+  tasks: TeamTask[];
+  chatId?: string;
+  joinCode: string;
+  createdAt: Date;
+  updatedAt?: Date;
 } 

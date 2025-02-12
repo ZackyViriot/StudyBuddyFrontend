@@ -27,7 +27,7 @@ export const DailyTasks: React.FC<DailyTasksProps> = ({ tasks, onTaskComplete })
       <CardContent>
         <div className="space-y-4">
           {todayTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tasks for today</p>
+            <p className="text-gray-500 dark:text-gray-400">You&apos;re all caught up!</p>
           ) : (
             todayTasks.map((task) => (
               <div key={task._id} className="flex items-center space-x-2">

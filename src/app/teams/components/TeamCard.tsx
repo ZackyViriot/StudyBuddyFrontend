@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Users, CheckCircle2 } from 'lucide-react';
 
 interface TeamMember {
   userId?: {
@@ -49,7 +50,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({
   onLeave,
   onDelete,
 }) => {
-  const activeTasks = team.tasks.filter(task => task.status !== 'completed').length;
+  const activeTasks = team.tasks.filter(task => task.status === 'in_progress' || task.status === 'pending').length;
   const totalMembers = team.members.length;
 
   return (
@@ -60,9 +61,6 @@ export const TeamCard: React.FC<TeamCardProps> = ({
             <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
               {team.name}
             </CardTitle>
-            <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
-              {totalMembers} {totalMembers === 1 ? 'member' : 'members'}
-            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -76,11 +74,25 @@ export const TeamCard: React.FC<TeamCardProps> = ({
                 </span>
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Tasks:</span>
-              <Badge variant="secondary" className="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-                {activeTasks}
-              </Badge>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="p-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20">
+                  <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Members:</span>
+                <Badge variant="secondary" className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+                  {totalMembers}
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="p-1 rounded-md bg-purple-50 dark:bg-purple-900/20">
+                  <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Tasks:</span>
+                <Badge variant="secondary" className="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
+                  {activeTasks}
+                </Badge>
+              </div>
             </div>
             {totalMembers > 0 && (
               <div className="flex items-center space-x-3">

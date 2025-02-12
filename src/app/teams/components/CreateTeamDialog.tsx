@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,42 +10,14 @@ import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { config } from '@/config';
+import { Team } from '@/types/team';
 
 interface Goal {
   title: string;
   description?: string;
   targetDate: Date;
   status: 'active' | 'achieved';
-}
-
-interface Team {
-  _id: string;
-  name: string;
-  description: string;
-  members: Array<{ 
-    userId: {
-      _id: string;
-      firstname: string;
-      lastname: string;
-      email: string;
-      profilePicture: string;
-    };
-    role: string; 
-  }>;
-  tasks: Array<{ _id: string; title: string; status: string; dueDate: string }>;
-  createdBy: {
-    _id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    profilePicture: string;
-  };
-  goals?: Array<{
-    title: string;
-    description?: string;
-    targetDate: Date;
-    status: 'active' | 'achieved';
-  }>;
 }
 
 interface CreateTeamFormData {
@@ -60,22 +32,59 @@ interface CreateTeamFormData {
 }
 
 interface CreateTeamDialogProps {
-  onCreateTeam: (data: Team) => void;
+  onCreateTeam: (team: Team) => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ onCreateTeam }) => {
+interface CreateTeamResponse {
+  _id: string;
+  name: string;
+  goals: Array<{
+    title: string;
+    description: string;
+    targetDate: Date;
+    status: 'active' | 'achieved';
+  }>;
+  members: Array<{
+    userId: {
+      _id: string;
+      firstname: string;
+      lastname: string;
+      email: string;
+      profilePicture: string;
+    };
+    role: string;
+  }>;
+  tasks: Array<{ _id: string; title: string; status: string; dueDate: string }>;
+  createdBy: {
+    _id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    profilePicture: string;
+  };
+}
+
+export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ 
+  onCreateTeam, 
+  isOpen, 
+  onOpenChange 
+}) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CreateTeamFormData>({
     defaultValues: {
       name: '',
       description: '',
       goals: [],
-      tasks: [] // Initialize empty tasks array
+      tasks: []
     }
   });
 
-  const [isOpen, setIsOpen] = React.useState(false);
   const [goalDates, setGoalDates] = React.useState<{ [key: number]: Date }>({});
   const goals = watch('goals');
+  const [teamName, setTeamName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const addGoal = () => {
     const newGoal: Goal = {
@@ -95,57 +104,74 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ onCreateTeam
     setGoalDates(newGoalDates);
   };
 
-  const onSubmit = async (data: CreateTeamFormData) => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      console.error('User ID not found');
-      return;
+  const generateJoinCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
+    return code;
+  };
 
-    const formattedGoals = data.goals.map(goal => ({
-      title: goal.title,
-      description: goal.description || '',
-      targetDate: goal.targetDate,
-      status: 'active' as const
-    }));
+  const handleSubmitForm = async (formData: CreateTeamFormData) => {
+    setIsLoading(true);
+    setError(null);
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const formattedGoals = formData.goals.map(goal => ({
+        title: goal.title,
+        description: goal.description || '',
+        targetDate: goal.targetDate,
+        status: 'active' as const
+      }));
+
       const teamData = {
-        name: data.name,
-        description: data.description,
-        createdBy: userId,
+        name: formData.name,
+        description: formData.description,
+        createdBy: localStorage.getItem('userId'),
         goals: formattedGoals,
         tasks: [],
+        joinCode: generateJoinCode(),
         members: [{
-          userId: userId,
+          userId: localStorage.getItem('userId'),
           role: 'admin' as const
         }]
       };
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teams`, {
+      const response = await fetch(`${config.API_URL}/api/teams`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(teamData)
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        onCreateTeam(result);
-        reset();
-        setIsOpen(false);
-      } else {
-        console.error('Failed to create team');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create team');
       }
+
+      const responseData = await response.json();
+      onCreateTeam(responseData);
+      reset();
+      onOpenChange(false);
+      setTeamName('');
     } catch (error) {
       console.error('Error creating team:', error);
+      setError(error instanceof Error ? error.message : 'Failed to create team');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
           Create New Team
@@ -157,7 +183,7 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ onCreateTeam
             Create New Team
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-6">
           {/* Team Details Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
@@ -175,6 +201,8 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ onCreateTeam
                   id="name"
                   placeholder="Enter a memorable name for your team"
                   className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
                 />
                 {errors.name && (
                   <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
@@ -299,12 +327,15 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({ onCreateTeam
 
           <Button 
             type="submit" 
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoading} 
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Creating...' : 'Create Team'}
+            {isLoading ? 'Creating...' : 'Create Team'}
           </Button>
         </form>
+        {error && (
+          <p className="text-sm text-red-500 mt-2">{error}</p>
+        )}
       </DialogContent>
     </Dialog>
   );

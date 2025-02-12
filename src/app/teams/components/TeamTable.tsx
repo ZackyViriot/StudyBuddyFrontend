@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Info, Users, LogOut, Trash2 } from 'lucide-react';
+import { Info, Users, LogOut, Trash2, ExternalLink, CheckCircle2, Copy, Check } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TeamDetailsDialog } from './TeamDetailsDialog';
 import { TeamMembersDialog } from './TeamMembersDialog';
 import { DeleteTeamDialog } from './DeleteTeamDialog';
 import { Team } from '@/types/team';
+import { useRouter } from 'next/navigation';
 
 interface TeamTableProps {
   teams: Team[];
@@ -25,10 +27,12 @@ export const TeamTable: React.FC<TeamTableProps> = ({
   onJoin,
   showJoinButton = false,
 }) => {
+  const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
 
   const handleViewDetails = (team: Team) => {
     setSelectedTeam(team);
@@ -55,17 +59,23 @@ export const TeamTable: React.FC<TeamTableProps> = ({
     }
   };
 
+  const handleCopyCode = async (teamId: string, joinCode: string) => {
+    await navigator.clipboard.writeText(joinCode);
+    setCopiedTeamId(teamId);
+    setTimeout(() => setCopiedTeamId(null), 2000);
+  };
+
   return (
     <>
       <div className="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <Table>
           <TableHeader className="bg-gray-50 dark:bg-gray-800/50">
             <TableRow>
-              <TableCell className="w-[40%] font-semibold">Team Name</TableCell>
-              <TableCell className="w-[20%] font-semibold">Your Role</TableCell>
-              <TableCell className="w-[15%] text-center font-semibold">Members</TableCell>
+              <TableCell className="w-[35%] font-semibold">Team Name</TableCell>
+              <TableCell className="w-[15%] font-semibold">Your Role</TableCell>
               <TableCell className="w-[15%] text-center font-semibold">Tasks</TableCell>
-              <TableCell className="w-[10%] text-right font-semibold">Actions</TableCell>
+              <TableCell className="w-[15%] text-center font-semibold">Members</TableCell>
+              <TableCell className="w-[20%] text-right font-semibold">Actions</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -73,12 +83,57 @@ export const TeamTable: React.FC<TeamTableProps> = ({
               const userRole = team.members.find((m) => m.userId?._id === currentUserId)?.role || 'none';
               const isAdmin = userRole === 'admin' || team.createdBy._id === currentUserId;
               const activeTasks = team.tasks.filter((task) => task.status !== 'completed').length;
+              const isUserInTeam = team.createdBy._id === currentUserId || 
+                               team.members.some(m => m.userId._id === currentUserId);
+              const isUserAdmin = team.createdBy._id === currentUserId || 
+                                team.members.some(m => m.userId._id === currentUserId && m.role === 'admin');
 
               return (
-                <TableRow key={team._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {team.name}
+                <TableRow 
+                  key={team._id} 
+                  className="group"
+                >
+                  <TableCell className="p-4">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10 border-2 border-white dark:border-gray-800 shadow-sm">
+                          <AvatarImage src={team.createdBy.profilePicture} />
+                          <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                            {team.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                            {team.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Users className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {team.members.length} member{team.members.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">Join Code:</span>
+                          <code className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">
+                            {team.joinCode}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleCopyCode(team._id, team.joinCode)}
+                          >
+                            {copiedTeamId === team._id ? (
+                              <Check className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -93,58 +148,73 @@ export const TeamTable: React.FC<TeamTableProps> = ({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                      onClick={(e) => handleMembersClick(team, e)}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{team.members.length}</span>
-                      </div>
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      <span>{team.tasks.length}</span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    {activeTasks}
+                    <div className="flex items-center justify-center gap-1">
+                      <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      <span>{team.members.length}</span>
+                    </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right p-4">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                        onClick={() => handleViewDetails(team)}
-                      >
-                        <Info className="h-4 w-4" />
-                      </Button>
-                      {showJoinButton && onJoin && userRole === 'none' ? (
+                      {showJoinButton && !isUserInTeam && (
                         <Button
                           variant="default"
                           size="sm"
-                          className="h-8 bg-purple-600 hover:bg-purple-700 text-white"
-                          onClick={() => onJoin(team._id)}
+                          onClick={() => onJoin?.(team._id)}
+                          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
                         >
-                          Join
+                          Join Team
                         </Button>
-                      ) : isAdmin ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                          onClick={(e) => handleDeleteClick(team, e)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                          onClick={() => onLeave(team._id)}
-                        >
-                          <LogOut className="h-4 w-4" />
-                        </Button>
+                      )}
+                      {isUserInTeam && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/teams/${team._id}`)}
+                            className="border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedTeam(team);
+                              setIsDetailsOpen(true);
+                            }}
+                            className="border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                          >
+                            Details
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onLeave(team._id)}
+                            className="border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                          >
+                            Leave
+                          </Button>
+                          {isUserAdmin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedTeam(team);
+                                setIsDeleteOpen(true);
+                              }}
+                              className="border-red-200 hover:bg-red-50 text-red-600 dark:border-red-800 dark:hover:bg-red-900/50 dark:text-red-400"
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>

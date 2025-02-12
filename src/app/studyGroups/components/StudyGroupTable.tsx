@@ -150,7 +150,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
     group.meetingType.toLowerCase().includes(searchQuery.toLowerCase()) ||
     group.meetingLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
     group.members.some(member => 
-      `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
+      member.userId && `${member.userId.firstname} ${member.userId.lastname}`.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
@@ -171,7 +171,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
   const isCreator = (group: StudyGroup) => {
     const token = localStorage.getItem('token');
     const userIdFromToken = getUserIdFromToken(token);
-    return userIdFromToken === group.createdBy._id;
+    return group.createdBy && userIdFromToken === group.createdBy._id;
   };
 
   const handleConfirmAction = async () => {
@@ -225,7 +225,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
             <table className="w-full">
               <thead className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
                 <tr className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/95">
-                  <th className="w-[300px] px-4 py-3 text-left backdrop-blur-sm">
+                  <th className="min-w-[200px] px-4 py-3 text-left backdrop-blur-sm">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('name')}
@@ -235,10 +235,10 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </th>
-                  <th className="w-[200px] px-4 py-3 text-left backdrop-blur-sm">
+                  <th className="hidden md:table-cell px-4 py-3 text-left backdrop-blur-sm">
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">Description</span>
                   </th>
-                  <th className="w-[100px] px-4 py-3 text-left backdrop-blur-sm">
+                  <th className="hidden sm:table-cell px-4 py-3 text-left backdrop-blur-sm">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('members')}
@@ -248,10 +248,10 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </th>
-                  <th className="w-[120px] px-4 py-3 text-left backdrop-blur-sm">
+                  <th className="hidden sm:table-cell px-4 py-3 text-left backdrop-blur-sm">
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">Details</span>
                   </th>
-                  <th className="w-[100px] px-4 py-3 text-left backdrop-blur-sm">
+                  <th className="px-4 py-3 text-left backdrop-blur-sm">
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">Actions</span>
                   </th>
                 </tr>
@@ -264,27 +264,38 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <ProfilePicture 
-                          src={getProfilePictureUrl(group.createdBy.profilePicture)}
-                          name={`${group.createdBy.firstname} ${group.createdBy.lastname}`}
-                          size={40}
-                        />
+                        <div className="hidden sm:block">
+                          <ProfilePicture 
+                            src={group.createdBy ? getProfilePictureUrl(group.createdBy.profilePicture) : null}
+                            name={group.createdBy ? `${group.createdBy.firstname} ${group.createdBy.lastname}` : 'Unknown'}
+                            size={40}
+                          />
+                        </div>
                         <div className="min-w-0">
                           <div className="font-semibold text-gray-900 dark:text-white truncate">
                             {group.name}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <span className="truncate">by {group.createdBy.firstname} {group.createdBy.lastname}</span>
+                            <span className="truncate hidden sm:inline">by {group.createdBy ? `${group.createdBy.firstname} ${group.createdBy.lastname}` : 'Unknown'}</span>
+                            {/* Show member count on mobile */}
+                            <span className="sm:hidden flex items-center">
+                              <Users className="h-3 w-3 mr-1" />
+                              {group.members.length}
+                            </span>
+                          </div>
+                          {/* Show description on mobile */}
+                          <div className="md:hidden text-sm text-gray-600 dark:text-gray-300 line-clamp-1 mt-1">
+                            {group.description}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3">
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 max-w-[200px]">
                         {group.description}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden sm:table-cell px-4 py-3">
                       <Badge 
                         variant="secondary" 
                         className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 cursor-pointer transition-colors whitespace-nowrap"
@@ -297,7 +308,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                         {group.members.length}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden sm:table-cell px-4 py-3">
                       <Button
                         variant="outline"
                         size="sm"
@@ -309,32 +320,45 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                       </Button>
                     </td>
                     <td className="px-4 py-3">
-                      {isMemberMap[group._id] ? (
+                      <div className="flex gap-2">
+                        {/* Show Details button on mobile */}
                         <Button
-                          onClick={() => setConfirmationDialog({
-                            isOpen: true,
-                            groupId: group._id,
-                            action: isCreator(group) ? 'delete' : 'leave',
-                            groupName: group.name
-                          })}
-                          variant="destructive"
+                          variant="outline"
                           size="sm"
-                          className={isCreator(group) 
-                            ? "w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
-                            : "w-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-                          }
+                          className="sm:hidden border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                          onClick={() => setSelectedGroup(group)}
                         >
-                          {isCreator(group) ? 'Delete' : 'Leave'}
+                          <Info className="h-4 w-4" />
                         </Button>
-                      ) : (
-                        <Button
-                          onClick={() => onJoin(group._id)}
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-                        >
-                          Join
-                        </Button>
-                      )}
+                        {isMemberMap[group._id] ? (
+                          <Button
+                            onClick={() => setConfirmationDialog({
+                              isOpen: true,
+                              groupId: group._id,
+                              action: isCreator(group) ? 'delete' : 'leave',
+                              groupName: group.name
+                            })}
+                            variant="destructive"
+                            size="sm"
+                            className={`${isCreator(group) 
+                              ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+                              : "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+                            } sm:w-full`}
+                          >
+                            <span className="hidden sm:inline">{isCreator(group) ? 'Delete' : 'Leave'}</span>
+                            <span className="sm:hidden">×</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => onJoin(group._id)}
+                            size="sm"
+                            className="sm:w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                          >
+                            <span className="hidden sm:inline">Join</span>
+                            <span className="sm:hidden">+</span>
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -379,16 +403,16 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                   </h3>
                   <div className="flex items-center gap-3 ml-11">
                     <ProfilePicture 
-                      src={getProfilePictureUrl(selectedGroup?.createdBy.profilePicture)}
-                      name={`${selectedGroup?.createdBy.firstname} ${selectedGroup?.createdBy.lastname}`}
+                      src={selectedGroup?.createdBy ? getProfilePictureUrl(selectedGroup.createdBy.profilePicture) : null}
+                      name={selectedGroup?.createdBy ? `${selectedGroup.createdBy.firstname} ${selectedGroup.createdBy.lastname}` : 'Unknown'}
                       size={40}
                     />
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedGroup?.createdBy.firstname} {selectedGroup?.createdBy.lastname}
+                        {selectedGroup?.createdBy ? `${selectedGroup.createdBy.firstname} ${selectedGroup.createdBy.lastname}` : 'Unknown'}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {selectedGroup?.createdBy.email}
+                        {selectedGroup?.createdBy?.email || 'No email available'}
                       </p>
                     </div>
                   </div>
@@ -448,21 +472,21 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
                   <div className="grid grid-cols-1 gap-3">
                     {selectedGroup?.members.map((member) => (
                       <div 
-                        key={member.userId._id}
+                        key={member.userId?._id || 'unknown'}
                         className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/20 border border-indigo-100 dark:border-indigo-800 hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => fetchUserProfile(member.userId._id)}
+                        onClick={() => member.userId && fetchUserProfile(member.userId._id)}
                       >
                         <ProfilePicture 
-                          src={getProfilePictureUrl(member.userId.profilePicture)}
-                          name={`${member.userId.firstname} ${member.userId.lastname}`}
+                          src={member.userId ? getProfilePictureUrl(member.userId.profilePicture) : null}
+                          name={member.userId ? `${member.userId.firstname} ${member.userId.lastname}` : 'Unknown'}
                           size={40}
                         />
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
-                            {member.userId.firstname} {member.userId.lastname}
+                            {member.userId ? `${member.userId.firstname} ${member.userId.lastname}` : 'Unknown Member'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {member.userId.email}
+                            {member.userId?.email || 'No email available'}
                           </div>
                         </div>
                         {member.role === 'admin' ? (
