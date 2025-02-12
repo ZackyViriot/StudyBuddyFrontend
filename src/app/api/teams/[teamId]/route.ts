@@ -12,7 +12,12 @@ export async function GET(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const response = await fetch(`${config.API_URL}/api/teams/${params.teamId}`, {
+    // Make sure we're using the correct backend URL
+    const backendUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:8000' 
+      : 'https://studybuddybackend-production.up.railway.app';
+
+    const response = await fetch(`${backendUrl}/api/teams/${params.teamId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -21,7 +26,9 @@ export async function GET(
     });
 
     if (!response.ok) {
-      return new NextResponse(response.statusText, { status: response.status });
+      const errorText = await response.text();
+      console.error('Backend error:', errorText);
+      return new NextResponse(errorText, { status: response.status });
     }
 
     const data = await response.json();
