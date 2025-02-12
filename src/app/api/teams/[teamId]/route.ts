@@ -1,21 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { config } from '@/config';
 
 export async function GET(
   request: Request,
   { params }: { params: { teamId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    // Get token from request headers
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const token = session.accessToken;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    
-    const response = await fetch(`${apiUrl}/api/teams/${params.teamId}`, {
+    const response = await fetch(`${config.API_URL}/api/teams/${params.teamId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
