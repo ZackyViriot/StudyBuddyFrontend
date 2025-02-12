@@ -10,19 +10,26 @@ export function middleware(request: NextRequest) {
     path === '/auth/signin' || 
     path === '/auth/signup' || 
     path.startsWith('/_next') || 
-    path.startsWith('/api/auth')
+    path.startsWith('/api/auth') ||
+    path.startsWith('/public')
 
-  // Get the token from the cookies
-  const token = request.cookies.get('token')?.value || ''
+  // Get the token from the authorization header
+  const authHeader = request.headers.get('authorization')
+  const token = authHeader?.replace('Bearer ', '') || ''
 
-  // If the path is public and user is logged in, redirect to teams page
-  if (isPublicPath && token) {
+  // Check if we're already on the signin page
+  const isSignInPage = path === '/auth/signin'
+
+  // If we're on the signin page and have a token, redirect to teams
+  if (isSignInPage && token) {
     return NextResponse.redirect(new URL('/teams', request.url))
   }
 
-  // If the path is protected and user is not logged in, redirect to signin page
+  // If we're on a protected path and don't have a token, redirect to signin
   if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL('/auth/signin', request.url))
+    const signInUrl = new URL('/auth/signin', request.url)
+    signInUrl.searchParams.set('callbackUrl', path)
+    return NextResponse.redirect(signInUrl)
   }
 
   return NextResponse.next()

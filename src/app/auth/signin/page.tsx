@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,10 +11,19 @@ import { config } from '@/config';
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/teams');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +50,16 @@ export default function SignIn() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Redirect to teams page
-      router.push('/teams');
+      // Dispatch auth change event
+      window.dispatchEvent(new Event('authStateChanged'));
+
+      // Get the callback URL from search params or default to /teams
+      const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+      
+      // Redirect to the appropriate page
+      router.push(callbackUrl);
     } catch (error) {
+      console.error('Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred during sign in');
     } finally {
       setLoading(false);
