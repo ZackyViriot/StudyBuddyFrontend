@@ -109,7 +109,7 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         if (response.data) {
           console.log('User created successfully, attempting login');
           // Automatically log in after successful signup
-          const loginResponse = await axios.post(`${config.API_URL}/auth/login`, {
+          const loginResponse = await axios.post(`${config.API_URL}/api/auth/login`, {
             email: formData.email,
             password: formData.password
           }, {
