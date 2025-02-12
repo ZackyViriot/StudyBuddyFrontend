@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { config } from '@/config';
 
 interface LoginFormProps {
@@ -24,6 +24,7 @@ interface LoginError {
 
 export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -55,7 +56,10 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
         }
         window.dispatchEvent(new Event('authStateChanged'));
         onClose();
-        router.push('/userProfile');
+        
+        // Get the callback URL from search params or default to /teams
+        const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+        router.push(callbackUrl);
       } else {
         throw new Error('No access token received');
       }
