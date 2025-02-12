@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 import { config } from '@/config';
 
-export default function SignIn() {
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -66,13 +66,63 @@ export default function SignIn() {
     }
   };
 
-  const handleSignup = () => {
-    router.push('/auth/signup');
-  };
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Input
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full"
+        />
+      </div>
 
+      <div className="space-y-2">
+        <Input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full"
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+        disabled={loading}
+      >
+        {loading ? 'Signing in...' : 'Sign in'}
+      </Button>
+
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Don't have an account?{' '}
+          <Link 
+            href="/auth/signup" 
+            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
+          >
+            Sign up
+          </Link>
+        </p>
+      </div>
+    </form>
+  );
+}
+
+export default function SignIn() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar onSignup={handleSignup} />
+      <Navbar />
       
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
@@ -83,55 +133,13 @@ export default function SignIn() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                />
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
               </div>
-
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </Button>
-
-              <div className="text-center mt-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Don't have an account?{' '}
-                  <Link 
-                    href="/auth/signup" 
-                    className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-            </form>
+            }>
+              <SignInForm />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
