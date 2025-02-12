@@ -25,13 +25,56 @@ const getEnvironment = () => {
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 
-// Remove these as they should be set by the server, not the client
-// axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
-// axios.defaults.headers.common['Access-Control-Allow-Credentials'] = 'true';
+// Configure axios interceptors
+axios.interceptors.request.use((config) => {
+  // Get token from localStorage
+  const token = localStorage.getItem('token');
+  
+  // If token exists, add it to headers
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  // Ensure proper headers are set
+  config.headers['Content-Type'] = 'application/json';
+  config.headers.Accept = 'application/json';
+  
+  return config;
+});
 
-// Add proper content type and accept headers
-axios.defaults.headers.common['Content-Type'] = 'application/json';
-axios.defaults.headers.common['Accept'] = 'application/json';
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If error is 401 and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Try to refresh token or reauthenticate
+        const token = localStorage.getItem('token');
+        if (!token) {
+          // Redirect to login if no token
+          window.location.href = '/auth/signin';
+          return Promise.reject(error);
+        }
+
+        // Retry the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/auth/signin';
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Ensure URLs don't have trailing slashes
 export const config = {
