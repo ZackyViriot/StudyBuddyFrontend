@@ -24,7 +24,7 @@ import { parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { cn } from '@/lib/utils';
-import { getBaseUrl } from '@/config';
+import { config } from '@/config';
 import { TaskDetailsDialog } from '../components/TaskDetailsDialog';
 import { MemberProfileDialog } from '../components/MemberProfileDialog';
 
@@ -132,7 +132,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
       console.log('Making request with token');
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${teamId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -377,7 +377,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`${getBaseUrl()}/api/teams/${teamId}/tasks/${taskId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
