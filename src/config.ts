@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-export const getBaseUrl = () => {
+const getApiUrl = () => {
   // Check if we're in development mode
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:8000';
   }
-  // Default to production mode if NODE_ENV is undefined
+  // Production URL
   return 'https://studybuddybackend-production.up.railway.app';
 };
 
@@ -35,7 +35,7 @@ axios.defaults.headers.common['Accept'] = 'application/json';
 
 // Ensure URLs don't have trailing slashes
 export const config = {
-  API_URL: getBaseUrl().replace(/\/$/, ''),
+  API_URL: getApiUrl(),
   FRONTEND_URL: getFrontendUrl().replace(/\/$/, ''),
   ENV: getEnvironment(),
 } as const;
@@ -43,6 +43,6 @@ export const config = {
 // Log the current configuration
 if (typeof window !== 'undefined') {
   console.log('Current environment:', getEnvironment());
-  console.log('Current API URL:', getBaseUrl());
+  console.log('Current API URL:', getApiUrl());
   console.log('Current Frontend URL:', getFrontendUrl());
 } 
