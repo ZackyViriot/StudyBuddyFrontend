@@ -167,7 +167,7 @@ export function ProfileForm() {
           return;
         }
 
-        const response = await axios.get(`${config.API_URL}/users/${userData._id}`, {
+        const response = await axios.get(`${config.API_URL}/api/users/${userData._id}`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -383,7 +383,7 @@ export function ProfileForm() {
 
       // Update the profile data
       const response = await axios.put(
-        `${config.API_URL}/users/${userData._id}`, 
+        `${config.API_URL}/api/users/${userData._id}`, 
         updateData,
         {
           headers: { 

@@ -186,7 +186,7 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
   const fetchUserProfile = async (userId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${config.API_URL}/users/${userId}`, {
+      const response = await fetch(`${config.API_URL}/api/users/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
