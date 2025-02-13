@@ -132,7 +132,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
       console.log('Making request with token');
       
-      const response = await fetch(`${config.API_URL}/teams/${teamId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { config } from '@/config';
+import Cookies from 'js-cookie';
 
 interface LoginFormProps {
   onClose: () => void;
@@ -37,20 +37,32 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
     setIsSubmitting(true);
     setError(null);
 
+    console.log('Login attempt with config:', {
+      apiUrl: config.API_URL,
+      baseUrl: config.BASE_URL,
+      env: process.env.NODE_ENV,
+      nextPublicApiUrl: process.env.NEXT_PUBLIC_API_URL
+    });
+
     try {
-      const response = await axios.post(`${config.API_URL}/auth/login`, {
+      const loginUrl = `${config.API_URL}/api/auth/login`;
+      console.log('Making login request to:', loginUrl);
+
+      const response = await config.axios.post(loginUrl, {
         email: formData.email,
         password: formData.password
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        withCredentials: true
       });
 
       if (response.data.access_token) {
+        // Store token in both localStorage and cookie
         localStorage.setItem('token', response.data.access_token);
+        Cookies.set('token', response.data.access_token, { 
+          expires: 7, // 7 days
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+
         if (response.data.user) {
           localStorage.setItem('user', JSON.stringify(response.data.user));
         }

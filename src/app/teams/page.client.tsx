@@ -44,7 +44,7 @@ export function TeamsPageClient() {
         return;
       }
 
-      const response = await fetch(`${config.API_URL}/teams`, {
+      const response = await fetch(`${config.API_URL}/api/teams`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export function TeamsPageClient() {
         throw new Error('User ID not found');
       }
 
-      const response = await fetch(`${config.API_URL}/teams/user/${userId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/user/${userId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export function TeamsPageClient() {
         throw new Error('No authentication token or user ID available');
       }
 
-      const response = await fetch(`${config.API_URL}/teams/join`, {
+      const response = await fetch(`${config.API_URL}/api/teams/join`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -247,7 +247,7 @@ export function TeamsPageClient() {
         return;
       }
 
-      const response = await fetch(`${config.API_URL}/teams/${teamId}/members/${userId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}/members/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -291,7 +291,7 @@ export function TeamsPageClient() {
         throw new Error('You do not have permission to delete this team');
       }
 
-      const response = await fetch(`${config.API_URL}/teams/${teamId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
