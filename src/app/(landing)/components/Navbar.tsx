@@ -79,9 +79,6 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
               <Link href="/studyGroups">
                 <Button variant="ghost">Study Groups</Button>
               </Link>
-              <Link href="/calendar">
-                <Button variant="ghost">Calendar</Button>
-              </Link>
               <Link href="/userProfile">
                 <Button variant="ghost">Profile</Button>
               </Link>
