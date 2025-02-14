@@ -163,7 +163,7 @@ export function ProfileForm() {
 
         const userData = JSON.parse(storedUser);
         if (!userData._id) {
-          handleLogout();
+          window.location.href = '/';
           return;
         }
 
@@ -239,7 +239,7 @@ export function ProfileForm() {
             typeof error.response === 'object' && 
             'status' in error.response && 
             error.response.status === 401) {
-          handleLogout();
+          window.location.href = '/';
           return;
         }
         setError('Failed to load user data. Please try again later.');
@@ -250,12 +250,6 @@ export function ProfileForm() {
 
     fetchUserData();
   }, [mounted]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -334,24 +328,19 @@ export function ProfileForm() {
     setError(null);
     
     try {
-      const checkAuth = () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          handleLogout();
-          return false;
-        }
-        return true;
-      };
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-      if (!checkAuth()) return;
-
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!userData._id) {
-        handleLogout();
+      if (!token || !storedUser) {
+        window.location.href = '/';
         return;
       }
 
-      const token = localStorage.getItem('token');
+      const userData = JSON.parse(storedUser);
+      if (!userData._id) {
+        window.location.href = '/';
+        return;
+      }
 
       // Convert studyPreferences object to string
       const studyPreferencesString = Object.entries(profile.studyPreferences)
@@ -440,7 +429,7 @@ export function ProfileForm() {
       console.error('Failed to update profile:', error);
       const err = error as ApiError;
       if (err.response?.status === 401) {
-        handleLogout();
+        window.location.href = '/';
         return;
       }
       if (err.response?.status === 413) {
