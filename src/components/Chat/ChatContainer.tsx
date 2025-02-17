@@ -61,7 +61,10 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
       return;
     }
 
-    const socketInstance = io(`${process.env.NEXT_PUBLIC_API_URL}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    console.log('Initializing socket connection to:', apiUrl);
+
+    const socketInstance = io(apiUrl, {
       auth: {
         token: token,
       },
@@ -150,12 +153,11 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
 
       console.log('Fetching messages with token:', token);
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.endsWith('/')
-        ? process.env.NEXT_PUBLIC_API_URL
-        : `${process.env.NEXT_PUBLIC_API_URL}/`;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const baseUrl = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
       
       const response = await fetch(
-        `${apiUrl}api/messages?roomId=${roomId}&roomType=${roomType}`,
+        `${baseUrl}api/messages?roomId=${roomId}&roomType=${roomType}`,
         {
           method: 'GET',
           headers: {
