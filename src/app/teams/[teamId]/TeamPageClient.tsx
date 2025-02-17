@@ -7,7 +7,7 @@ import { User } from '@/types/user';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Target, Calendar, Settings, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, Trophy, Rocket, ArrowUpRight, ChevronLeft, ChevronRight, Check, CalendarDays } from 'lucide-react';
+import { Users, Target as Goal, Calendar, Settings, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, Trophy, Rocket, ArrowUpRight, ChevronLeft, ChevronRight, Check, CalendarDays, MessageSquare } from 'lucide-react';
 import { TeamMembersList } from '../components/TeamMembersList';
 import { TeamGoalsList } from '../components/TeamGoalsList';
 import { TeamSettings } from '../components/TeamSettings';
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { config } from '@/config';
 import { TaskDetailsDialog } from '../components/TaskDetailsDialog';
 import { MemberProfileDialog } from '../components/MemberProfileDialog';
+import { ChatContainer } from '@/components/Chat/ChatContainer';
 
 interface TeamPageClientProps {
   teamId: string;
@@ -38,7 +39,8 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      when: "beforeChildren"
+      when: "beforeChildren",
+      duration: 0.5
     }
   }
 };
@@ -51,14 +53,17 @@ const itemVariants = {
     transition: {
       type: "spring",
       stiffness: 100,
-      damping: 15
+      damping: 15,
+      duration: 0.5
     }
   }
 };
 
 const cardHoverVariants = {
+  initial: { scale: 1 },
   hover: {
     scale: 1.02,
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
     transition: {
       type: "spring",
       stiffness: 400,
@@ -459,825 +464,539 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
     setIsMemberProfileOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative"
-        >
-          <div className="w-16 h-16 rounded-full border-4 border-indigo-600/20 border-t-indigo-600 animate-spin" />
-        </motion.div>
-      </div>
-    );
-  }
+  // Add this helper function near the top of the component
+  const getUserData = () => {
+    if (typeof window === 'undefined') return {};
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return {};
+    }
+  };
 
-  if (!team) {
+  // Replace the isAdmin check with this
+  const isAdmin = React.useMemo(() => {
+    const userData = getUserData();
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center min-h-[60vh] text-center"
-      >
-        <div className="p-6 bg-white dark:bg-gray-800/90 rounded-2xl shadow-xl">
-          <div className="text-5xl mb-6">🤔</div>
-          <h3 className="text-2xl font-semibold mb-3">Team Not Found</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">This team doesn't exist or you don't have access to it.</p>
-          <Button 
-            onClick={() => router.push('/teams')}
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+      team?.createdBy?._id === userData._id ||
+      team?.members?.some(
+        (m) => m.userId._id === userData._id && m.role === 'admin'
+      )
+    );
+  }, [team]);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative"
           >
-            Return to Teams
-          </Button>
+            <div className="w-16 h-16 rounded-full border-4 border-indigo-600/20 border-t-indigo-600 animate-spin" />
+          </motion.div>
         </div>
-      </motion.div>
-    );
-  }
+      );
+    }
 
-  const myTasks = team.tasks.filter(task => {
-    const assignedUsers = normalizeAssignedTo(task.assignedTo);
-    const userId = JSON.parse(localStorage.getItem('user') || '{}')._id;
-    return assignedUsers.some(user => user._id === userId);
-  });
+    if (error) {
+      return <div>Error: {error}</div>;
+    }
 
-  const tasksByDate = team.tasks.reduce((acc, task) => {
-    const date = new Date(task.dueDate).toDateString();
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(task);
-    return acc;
-  }, {} as Record<string, typeof team.tasks>);
+    if (!team) {
+      return <div>Team not found or you don't have access</div>;
+    }
 
-  const isAdmin = team.createdBy._id === JSON.parse(localStorage.getItem('user') || '{}')._id || 
-                 team.members.some(m => m.userId._id === JSON.parse(localStorage.getItem('user') || '{}')._id && m.role === 'admin');
-
-  return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4 px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto py-4"
-    >
-      {/* Team Header Card - Make it more compact */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/5 dark:to-purple-500/5 backdrop-blur-sm border border-white/20 shadow-xl">
-          <CardHeader className="p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar className="h-16 w-16 border-2 border-white dark:border-gray-800 shadow-xl">
-                    <AvatarImage src={team.createdBy.profilePicture} />
-                    <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xl">
-                      {team.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -bottom-1 -right-1 bg-green-500 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800"
-                  />
-                </div>
+    return (
+      <>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-10"
+        >
+          {/* Header Section */}
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <Avatar className="h-20 w-20 border-4 border-white dark:border-gray-700 shadow-2xl">
+                  <AvatarImage src={team.createdBy?.profilePicture} />
+                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-2xl">
+                    {team.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
-                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+                  <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
                     {team.name}
-                  </CardTitle>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{team.description}</p>
+                  </h1>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg mt-2">{team.description}</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => setIsAddTaskOpen(true)}
-                  size="sm"
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Task
-                </Button>
               </div>
             </div>
-          </CardHeader>
-        </Card>
-      </motion.div>
+          </motion.div>
 
-      {/* Statistics Cards - Make them more compact */}
-      <motion.div 
-        variants={itemVariants} 
-        className="grid grid-cols-2 sm:grid-cols-4 gap-4"
-      >
-        <motion.div whileHover="hover" variants={cardHoverVariants}>
-          <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5" />
-            <CardHeader className="pb-2 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Team Members</CardTitle>
-                <Users className="h-5 w-5 text-indigo-500" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{team.members.length}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active contributors</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div whileHover="hover" variants={cardHoverVariants}>
-          <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5" />
-            <CardHeader className="pb-2 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Tasks</CardTitle>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{getCompletedTasksCount()}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tasks finished</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div whileHover="hover" variants={cardHoverVariants}>
-          <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5" />
-            <CardHeader className="pb-2 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Team Progress</CardTitle>
-                <ChartBar className="h-5 w-5 text-purple-500" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{getTeamProgress()}%</div>
-              <Progress 
-                value={getTeamProgress()} 
-                className="mt-2 h-1.5 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 bg-purple-100 dark:bg-purple-950/20"
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div whileHover="hover" variants={cardHoverVariants}>
-          <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5" />
-            <CardHeader className="pb-2 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Upcoming Deadlines</CardTitle>
-                <Clock className="h-5 w-5 text-orange-500" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{getUpcomingDeadlines()}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Due this week</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-
-      {/* Main Content Grid - Adjust spacing and layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        {/* Calendar Section - Make it larger */}
-        <motion.div variants={itemVariants} className="xl:col-span-3">
-          <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-gray-100 dark:border-gray-800 p-4 bg-gradient-to-r from-purple-500/5 to-indigo-500/5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Team Calendar</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-                      {format(selectedDate || new Date(), 'MMMM yyyy')}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setIsAddTaskOpen(true)}
-                  size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Task
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 overflow-hidden">
-              <div className="h-[600px] relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-purple-500/10 dark:from-transparent dark:via-purple-900/5 dark:to-purple-900/10 pointer-events-none z-10" />
-                <BigCalendar
-                  localizer={localizer}
-                  events={team.tasks.map(task => ({
-                    id: task._id || `temp-${Math.random()}`,
-                    title: task.title,
-                    start: new Date(task.dueDate),
-                    end: new Date(task.dueDate),
-                    allDay: true,
-                    resource: task
-                  }))}
-                  views={['month', 'week', 'day', 'agenda']}
-                  view={view}
-                  date={date}
-                  onView={setView}
-                  onNavigate={(newDate) => {
-                    setDate(newDate);
-                    setSelectedDate(newDate);
-                  }}
-                  defaultView="month"
-                  step={60}
-                  components={{
-                    event: (props: CalendarEventProps) => (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        whileHover={{ 
-                          scale: 1.02,
-                          transition: { type: "spring", stiffness: 400 }
-                        }}
-                        className={`p-1.5 rounded-md text-sm ${
-                          getTaskStatus(props.event.resource) === 'completed'
-                            ? 'bg-green-500/20 text-green-700 dark:text-green-300'
-                            : getTaskStatus(props.event.resource) === 'in_progress'
-                            ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                            : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300'
-                        }`}
-                      >
-                        <div className="font-medium truncate text-xs">{props.title}</div>
-                      </motion.div>
-                    ),
-                    dateCellWrapper: (props) => {
-                      const hasEvents = team.tasks.some(task => {
-                        const taskDate = new Date(task.dueDate);
-                        return taskDate.toDateString() === props.value.toDateString();
-                      });
-                      const isSelected = selectedDate && props.value.toDateString() === selectedDate.toDateString();
-                      return (
-                        <motion.div
-                          whileHover={{ 
-                            backgroundColor: "rgba(147, 51, 234, 0.08)",
-                            transition: { duration: 0.2 }
-                          }}
-                          className={`rbc-day-bg ${hasEvents ? 'has-events' : ''} ${isSelected ? 'is-selected' : ''}`}
-                        >
-                          {props.children}
-                        </motion.div>
-                      );
-                    },
-                    toolbar: (props) => (
-                      <div className="p-4 flex flex-col sm:flex-row gap-4 items-center justify-between border-b border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-4 w-full sm:w-auto">
-                          <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => props.onNavigate('PREV')}
-                              className="h-8 w-8 rounded-md bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30"
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <div className="px-4 py-1.5 font-semibold text-sm text-purple-700 dark:text-purple-300 min-w-[140px] text-center">
-                              {format(props.date, 'MMMM yyyy')}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => props.onNavigate('NEXT')}
-                              className="h-8 w-8 rounded-md bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30"
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => props.onNavigate('TODAY')}
-                            className="bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30 font-medium rounded-lg"
-                          >
-                            Today
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center w-full sm:w-auto">
-                          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-1 flex items-center gap-1 w-full sm:w-auto">
-                            {['month', 'week', 'day'].map((viewName) => (
-                              <Button
-                                key={`calendar-view-${viewName}`}
-                                variant={props.view === viewName ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => props.onView(viewName as View)}
-                                className={cn(
-                                  "text-sm font-medium flex-1 sm:flex-none px-4 rounded-md transition-all duration-200",
-                                  props.view === viewName 
-                                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm hover:from-purple-700 hover:to-indigo-700 border-0" 
-                                    : "bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30 border-0"
-                                )}
-                              >
-                                {viewName.charAt(0).toUpperCase() + viewName.slice(1)}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }}
-                  onSelectEvent={(event: CalendarEvent) => {
-                    setSelectedDate(event.start);
-                  }}
-                  onSelectSlot={({ start }: { start: Date }) => {
-                    setSelectedDate(start);
-                  }}
-                  className="rounded-lg calendar-modern"
-                  popup
-                  selectable
-                  style={{ height: '100%' }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Right Column - Selected Day, Tasks and Team Members */}
-        <motion.div variants={itemVariants} className="space-y-4">
-          {/* Selected Day Tasks */}
-          <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-            <CardHeader className="p-3 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-purple-500/5 to-indigo-500/5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                    <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                      {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today'}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
-                      {selectedDate ? format(selectedDate, 'EEEE') : format(new Date(), 'EEEE')}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setIsAddTaskOpen(true)}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-purple-500/10 hover:text-purple-600"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-3">
-              <div className="space-y-2">
-                {team.tasks
-                  .filter(task => {
-                    const taskDate = new Date(task.dueDate);
-                    const compareDate = selectedDate || new Date();
-                    return taskDate.toDateString() === compareDate.toDateString();
-                  })
-                  .map((task, index) => (
-                    <div
-                      key={`selected-${task._id}`}
-                      onClick={() => handleTaskClick(task)}
-                      className="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{task.title}</h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`${getTaskStatusColor(getTaskStatus(task))} text-xs px-1`}>
-                            {task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'}
-                          </Badge>
-                          {task.status !== 'completed' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (task._id) {
-                                  handleTaskStatusUpdate(task._id, 'completed');
-                                }
-                              }}
-                              className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Complete
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className={`${getTaskStatusColor(getTaskStatus(task))} text-xs px-1`}>
-                          {task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'}
-                        </Badge>
-                        <div className="flex flex-wrap items-center gap-1">
-                          {normalizeAssignedTo(task.assignedTo).map((user, index) => (
-                            <span 
-                              key={`${task._id}-${user._id || index}`}
-                              className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-                              onClick={(e) => handleMemberClick(user, e)}
-                            >
-                              {getUserDisplayName(user)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      {task.progress !== undefined && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Progress: {task.progress}%
-                        </div>
-                      )}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            <motion.div 
+              variants={itemVariants}
+              whileHover="hover"
+              initial="initial"
+              animate="visible"
+            >
+              <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10" />
+                <CardHeader className="pb-2 relative">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300">Team Members</CardTitle>
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                      <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                  ))}
-                {team.tasks.filter(task => {
-                  const taskDate = new Date(task.dueDate);
-                  const compareDate = selectedDate || new Date();
-                  return taskDate.toDateString() === compareDate.toDateString();
-                }).length === 0 && (
-                  <div className="text-center py-6">
-                    <Calendar className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No tasks scheduled for this day</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent className="relative pt-4">
+                  <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{team.members.length}</div>
+                  <p className="text-base text-gray-500 dark:text-gray-400 mt-2">Active contributors</p>
+                  <div className="absolute bottom-0 right-0 h-32 w-32 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-full transform translate-x-16 translate-y-16" />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-          {/* Active Tasks */}
-          <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-            <CardHeader className="p-3 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 mb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                    <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <motion.div 
+              variants={itemVariants}
+              whileHover="hover"
+              initial="initial"
+              animate="visible"
+            >
+              <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10" />
+                <CardHeader className="pb-2 relative">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300">Completed Tasks</CardTitle>
+                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                      <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative pt-4">
+                  <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{getCompletedTasksCount()}</div>
+                  <p className="text-base text-gray-500 dark:text-gray-400 mt-2">Tasks finished</p>
+                  <div className="absolute bottom-0 right-0 h-32 w-32 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-full transform translate-x-16 translate-y-16" />
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div 
+              variants={itemVariants}
+              whileHover="hover"
+              initial="initial"
+              animate="visible"
+            >
+              <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10" />
+                <CardHeader className="pb-2 relative">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300">Team Progress</CardTitle>
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                      <ChartBar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative pt-4">
+                  <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{getTeamProgress()}%</div>
+                  <Progress 
+                    value={getTeamProgress()} 
+                    className="mt-4 h-2 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 bg-purple-100 dark:bg-purple-950/20"
+                  />
+                  <div className="absolute bottom-0 right-0 h-32 w-32 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full transform translate-x-16 translate-y-16" />
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div 
+              variants={itemVariants}
+              whileHover="hover"
+              initial="initial"
+              animate="visible"
+            >
+              <Card className="relative overflow-hidden bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10" />
+                <CardHeader className="pb-2 relative">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300">Upcoming Deadlines</CardTitle>
+                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                      <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative pt-4">
+                  <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{getUpcomingDeadlines()}</div>
+                  <p className="text-base text-gray-500 dark:text-gray-400 mt-2">Due this week</p>
+                  <div className="absolute bottom-0 right-0 h-32 w-32 bg-gradient-to-br from-orange-500/5 to-red-500/5 rounded-full transform translate-x-16 translate-y-16" />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Main Content Grid */}
+          {/* Calendar Section - Full Width */}
+          <motion.div variants={itemVariants}>
+            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[700px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10">
+                    <Calendar className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Active Tasks</CardTitle>
-                    <CardDescription className="text-xs text-gray-500 dark:text-gray-400">In progress</CardDescription>
+                    <CardTitle className="text-xl font-semibold">Team Calendar</CardTitle>
+                    <CardDescription className="text-base">Schedule and deadlines</CardDescription>
                   </div>
                 </div>
-                <Button 
-                  onClick={() => setIsAddTaskOpen(true)}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-purple-500/10 hover:text-purple-600"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="max-h-[300px] overflow-y-auto px-3 pb-3">
-              <div className="space-y-2.5">
-                <AnimatePresence mode="popLayout">
-                  {team.tasks
-                    .filter(task => task.status !== 'completed')
-                    .map((task) => (
-                      <motion.div
-                        key={task._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
-                        onClick={() => handleTaskClick(task)}
-                        className="group relative overflow-hidden p-2.5 rounded-lg border bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{task.title}</h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge 
-                                  variant="outline" 
-                                  className={`${getTaskStatusColor(getTaskStatus(task))} text-[10px] px-1.5 py-0 rounded-full`}
-                                >
-                                  {task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'}
-                                </Badge>
-                                <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
-                                  <CalendarDays className="h-3 w-3" />
-                                  {formatDate(task.dueDate)}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex flex-wrap items-center gap-1">
-                                {normalizeAssignedTo(task.assignedTo).slice(0, 3).map((user, index) => (
-                                  <span 
-                                    key={`${task._id}-${user._id || index}`}
-                                    className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-                                    onClick={(e) => handleMemberClick(user, e)}
-                                  >
-                                    {getUserDisplayName(user)}
-                                  </span>
-                                ))}
-                                {normalizeAssignedTo(task.assignedTo).length > 3 && (
-                                  <span className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                    +{normalizeAssignedTo(task.assignedTo).length - 3} more
-                                  </span>
-                                )}
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="h-[550px]">
+                  <BigCalendar
+                    localizer={localizer}
+                    events={team.tasks.map(task => ({
+                      id: task._id || `temp-${Math.random()}`,
+                      title: task.title,
+                      start: new Date(task.dueDate),
+                      end: new Date(task.dueDate),
+                      allDay: true,
+                      resource: task
+                    }))}
+                    views={['month', 'week', 'day']}
+                    defaultView="month"
+                    view={view}
+                    date={date}
+                    onNavigate={(newDate) => {
+                      setDate(newDate);
+                    }}
+                    onView={(newView) => {
+                      setView(newView);
+                    }}
+                    components={{
+                      event: (props: CalendarEventProps) => (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          whileHover={{ 
+                            scale: 1.02,
+                            transition: { type: "spring", stiffness: 400 }
+                          }}
+                          className={`p-1.5 rounded-md text-sm ${
+                            getTaskStatus(props.event.resource) === 'completed'
+                              ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                              : getTaskStatus(props.event.resource) === 'in_progress'
+                              ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                              : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300'
+                          }`}
+                        >
+                          <div className="font-medium truncate text-xs">{props.title}</div>
+                        </motion.div>
+                      ),
+                      dateCellWrapper: (props) => {
+                        const hasEvents = team.tasks.some(task => {
+                          const taskDate = new Date(task.dueDate);
+                          return taskDate.toDateString() === props.value.toDateString();
+                        });
+                        const isSelected = selectedDate && props.value.toDateString() === selectedDate.toDateString();
+                        return (
+                          <motion.div
+                            whileHover={{ 
+                              backgroundColor: "rgba(147, 51, 234, 0.08)",
+                              transition: { duration: 0.2 }
+                            }}
+                            className={`rbc-day-bg ${hasEvents ? 'has-events' : ''} ${isSelected ? 'is-selected' : ''}`}
+                          >
+                            {props.children}
+                          </motion.div>
+                        );
+                      },
+                      toolbar: (props) => (
+                        <div className="p-4 flex flex-col sm:flex-row gap-4 items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => props.onNavigate('PREV')}
+                                className="h-8 w-8 rounded-md bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <div className="px-4 py-1.5 font-semibold text-sm text-purple-700 dark:text-purple-300 min-w-[140px] text-center">
+                                {format(props.date, 'MMMM yyyy')}
                               </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (task._id) {
-                                    handleTaskStatusUpdate(task._id, 'completed');
-                                  }
-                                }}
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
+                                onClick={() => props.onNavigate('NEXT')}
+                                className="h-8 w-8 rounded-md bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30"
                               >
-                                <Check className="h-3 w-3" />
+                                <ChevronRight className="h-4 w-4" />
                               </Button>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => props.onNavigate('TODAY')}
+                              className="bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30 font-medium rounded-lg"
+                            >
+                              Today
+                            </Button>
+                          </div>
+
+                          <div className="flex items-center w-full sm:w-auto">
+                            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-1 flex items-center gap-1 w-full sm:w-auto">
+                              {['month', 'week', 'day'].map((viewName) => (
+                                <Button
+                                  key={`calendar-view-${viewName}`}
+                                  variant={props.view === viewName ? "default" : "ghost"}
+                                  size="sm"
+                                  onClick={() => props.onView(viewName as View)}
+                                  className={cn(
+                                    "text-sm font-medium flex-1 sm:flex-none px-4 rounded-md transition-all duration-200",
+                                    props.view === viewName 
+                                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm hover:from-purple-700 hover:to-indigo-700 border-0" 
+                                      : "bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-700/30 border-0"
+                                  )}
+                                >
+                                  {viewName.charAt(0).toUpperCase() + viewName.slice(1)}
+                                </Button>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                </AnimatePresence>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Team Members Quick View */}
-          <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-            <CardHeader className="p-3 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-purple-500/5 to-indigo-500/5">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      )
+                    }}
+                    onSelectEvent={(event: CalendarEvent) => {
+                      setSelectedDate(event.start);
+                    }}
+                    onSelectSlot={({ start }: { start: Date }) => {
+                      setSelectedDate(start);
+                    }}
+                    className="rounded-xl calendar-modern"
+                    popup
+                    selectable
+                  />
                 </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Team Members</CardTitle>
-                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">Active contributors</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              <div className="space-y-2">
-                {team.members.slice(0, 5).map((member, index) => {
-                  const memberStats = {
-                    completedTasks: team.tasks.filter(task => 
-                      task.status === 'completed' && 
-                      normalizeAssignedTo(task.assignedTo).some(u => u._id === member.userId._id)
-                    ).length,
-                    totalTasks: team.tasks.filter(task =>
-                      normalizeAssignedTo(task.assignedTo).some(u => u._id === member.userId._id)
-                    ).length,
-                    activeGoals: team.goals.filter(goal => goal.status === 'active').length,
-                    recentActivity: team.tasks
-                      .filter(task => normalizeAssignedTo(task.assignedTo).some(u => u._id === member.userId._id))
-                      .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())
-                      .slice(0, 3)
-                      .map(task => ({
-                        type: task.status === 'completed' ? 'completed' : 'updated',
-                        task: task.title,
-                        date: task.updatedAt || task.createdAt
-                      }))
-                  };
+              </CardContent>
+            </Card>
+          </motion.div>
 
-                  return (
-                    <div 
-                      key={`member-${member.userId._id}`} 
-                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all duration-200"
-                      onClick={() => {
-                        setSelectedMember({
-                          _id: member.userId._id,
-                          name: member.userId.name,
-                          email: member.userId.email,
-                          profilePicture: member.userId.profilePicture,
-                          role: member.role,
-                          joinedAt: member.joinedAt || team.createdAt,
-                          teamStats: memberStats
-                        });
-                        setIsMemberProfileOpen(true);
-                      }}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Tasks Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/10 hover:-translate-y-1">
+                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10">
+                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-semibold">Tasks</CardTitle>
+                        <CardDescription className="text-base">Track team progress</CardDescription>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setIsAddTaskOpen(true)}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6"
                     >
-                      <Avatar className="h-8 w-8 border-2 border-white dark:border-gray-800">
-                        <AvatarImage src={member.userId.profilePicture} />
-                        <AvatarFallback className="text-xs">
-                          {((member.userId.name ?? (member.userId.firstname && member.userId.lastname ? `${member.userId.firstname} ${member.userId.lastname}` : '')) || '??').substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{member.userId.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{member.role}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Tabs Section */}
-      <motion.div variants={itemVariants}>
-        <Tabs defaultValue="members" className="space-y-6">
-          <TabsList className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 p-1 rounded-xl flex flex-wrap gap-2">
-            <TabsTrigger value="members" className="flex-1 sm:flex-none data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg">
-              <Users className="h-4 w-4 mr-2" />
-              All Members
-            </TabsTrigger>
-            <TabsTrigger value="goals" className="flex-1 sm:flex-none data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg">
-              <Target className="h-4 w-4 mr-2" />
-              Team Goals
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="flex-1 sm:flex-none data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              All Tasks
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="settings" className="flex-1 sm:flex-none data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="members">
-            <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-              <CardContent className="p-6">
-                <TeamMembersList team={team} currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="goals">
-            <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-              <CardContent className="p-6">
-                <TeamGoalsList 
-                  team={team} 
-                  currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} 
-                  onAddGoalClick={() => setIsAddGoalOpen(true)}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="tasks">
-            <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  {/* Active Tasks Section */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                          <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Active Tasks</h3>
-                      </div>
-                      <Button 
-                        onClick={() => setIsAddTaskOpen(true)}
-                        size="sm"
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Task
-                      </Button>
-                    </div>
-                    <div className="grid gap-4">
-                      {team.tasks
-                        .filter(task => task.status !== 'completed')
-                        .map((task) => (
-                          <div
-                            key={task._id}
-                            onClick={() => handleTaskClick(task)}
-                            className="group relative overflow-hidden p-2.5 rounded-lg border bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="relative">
-                              <div className="flex items-center gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{task.title}</h4>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`${getTaskStatusColor(getTaskStatus(task))} text-[10px] px-1.5 py-0 rounded-full`}
-                                    >
-                                      {task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'}
-                                    </Badge>
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
-                                      <CalendarDays className="h-3 w-3" />
-                                      {formatDate(task.dueDate)}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex flex-wrap items-center gap-1">
-                                    {normalizeAssignedTo(task.assignedTo).slice(0, 3).map((user, index) => (
-                                      <span 
-                                        key={`${task._id}-${user._id || index}`}
-                                        className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-                                        onClick={(e) => handleMemberClick(user, e)}
-                                      >
-                                        {getUserDisplayName(user)}
-                                      </span>
-                                    ))}
-                                    {normalizeAssignedTo(task.assignedTo).length > 3 && (
-                                      <span className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                        +{normalizeAssignedTo(task.assignedTo).length - 3} more
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
+                      <Plus className="h-5 w-5 mr-2" />
+                      Add Task
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
+                  <div className="space-y-4">
+                    {team.tasks
+                      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                      .map((task) => (
+                        <motion.div
+                          key={task._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.02, y: -2 }}
+                          onClick={() => handleTaskClick(task)}
+                          className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className={cn(
+                                "p-3 rounded-xl",
+                                task.status === 'completed' ? "bg-green-100 dark:bg-green-900/20" :
+                                task.status === 'in_progress' ? "bg-blue-100 dark:bg-blue-900/20" :
+                                "bg-yellow-100 dark:bg-yellow-900/20"
+                              )}>
+                                {task.status === 'completed' ? (
+                                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                ) : task.status === 'in_progress' ? (
+                                  <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                ) : (
+                                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{task.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                  Due: {format(new Date(task.dueDate), 'MMM dd, yyyy')}
+                                </p>
                               </div>
                             </div>
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "px-4 py-1.5 text-sm font-medium rounded-lg",
+                                task.status === 'completed' ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400" :
+                                task.status === 'in_progress' ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" :
+                                "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
+                              )}
+                            >
+                              {task.status.replace('_', ' ')}
+                            </Badge>
                           </div>
-                        ))}
-                    </div>
+                        </motion.div>
+                      ))}
                   </div>
-
-                  {/* Completed Tasks Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">Completed Tasks</h3>
-                    <div className="grid gap-4">
-                      {team.tasks
-                        .filter(task => task.status === 'completed')
-                        .map((task) => (
-                          <div
-                            key={task._id}
-                            onClick={() => handleTaskClick(task)}
-                            className="p-4 rounded-lg border bg-green-50/50 dark:bg-green-900/20 hover:shadow-md transition-all duration-200 cursor-pointer"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="min-w-0 flex-1">
-                                <h4 className="font-medium text-base mb-1">{task.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{task.description}</p>
-                                <div className="flex items-center gap-3 flex-wrap">
-                                  <Badge variant="outline" className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 text-xs">
-                                    Completed
-                                  </Badge>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    Completed on: {format(new Date(task.dueDate), 'MMM d, yyyy')}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    {normalizeAssignedTo(task.assignedTo).map((user, index) => (
-                                      <Avatar key={`${task._id}-${user._id || index}`} className="h-6 w-6 border-2 border-white dark:border-gray-800">
-                                        <AvatarImage src={user.profilePicture} />
-                                        <AvatarFallback>
-                                          {((user.name ?? (user.firstname && user.lastname ? `${user.firstname} ${user.lastname}` : '')) || '??').substring(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="settings">
-              <Card className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 shadow-xl">
-                <CardContent className="p-6">
-                  <TeamSettings team={team} />
                 </CardContent>
               </Card>
-            </TabsContent>
-          )}
-        </Tabs>
-      </motion.div>
+            </motion.div>
 
-      <AddTaskDialog
-        team={team}
-        isOpen={isAddTaskOpen}
-        onClose={() => setIsAddTaskOpen(false)}
-        onAddTask={handleAddTask}
-      />
+            {/* Team Members Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+                      <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">Team Members</CardTitle>
+                      <CardDescription className="text-base">Active contributors</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
+                  <TeamMembersList team={team} currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-      <AddGoalDialog
-        team={team}
-        isOpen={isAddGoalOpen}
-        onClose={() => setIsAddGoalOpen(false)}
-        onAddGoal={handleAddGoal}
-      />
+            {/* Goals Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1">
+                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
+                        <Goal className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-semibold">Team Goals</CardTitle>
+                        <CardDescription className="text-base">Track team objectives</CardDescription>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setIsAddGoalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Add Goal
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
+                  <TeamGoalsList 
+                    team={team} 
+                    currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} 
+                    onAddGoalClick={() => setIsAddGoalOpen(true)}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-      <TaskDetailsDialog
-        isOpen={isTaskDetailsOpen}
-        onClose={() => setIsTaskDetailsOpen(false)}
-        task={selectedTask}
-        onTaskUpdate={handleTaskUpdate}
-      />
+            {/* Chat Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+                      <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">Team Chat</CardTitle>
+                      <CardDescription className="text-base">Communicate with your team members in real-time</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 h-[calc(100%-5rem)]">
+                  <ChatContainer roomId={team._id} roomType="team" />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
 
-      <MemberProfileDialog
-        isOpen={isMemberProfileOpen}
-        onClose={() => setIsMemberProfileOpen(false)}
-        member={selectedMember}
-        teamStats={selectedMember?.teamStats}
-      />
-    </motion.div>
+        <AddTaskDialog
+          team={team}
+          isOpen={isAddTaskOpen}
+          onClose={() => setIsAddTaskOpen(false)}
+          onAddTask={handleAddTask}
+        />
+
+        <AddGoalDialog
+          team={team}
+          isOpen={isAddGoalOpen}
+          onClose={() => setIsAddGoalOpen(false)}
+          onAddGoal={handleAddGoal}
+        />
+
+        <TaskDetailsDialog
+          task={selectedTask}
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onTaskUpdate={(updatedTask) => {
+            if (updatedTask._id) {
+              handleTaskStatusUpdate(updatedTask._id, updatedTask.status);
+            }
+          }}
+        />
+
+        <MemberProfileDialog
+          member={selectedMember}
+          isOpen={!!selectedMember}
+          onClose={() => setSelectedMember(null)}
+        />
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-6 py-8 font-outfit">
+        {renderContent()}
+      </div>
+    </div>
   );
 }
 
 <style jsx global>{`
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+  .font-outfit {
+    font-family: 'Outfit', sans-serif;
+  }
+
   .calendar-modern {
-    font-family: inherit !important;
+    font-family: 'Outfit', sans-serif !important;
     background: transparent !important;
   }
 

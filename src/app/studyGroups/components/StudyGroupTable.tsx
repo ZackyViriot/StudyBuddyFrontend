@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, Calendar, Clock, ArrowUpDown, Info, BookOpen, UserCircle, User, FileText, School } from 'lucide-react';
+import { Users, MapPin, Calendar, Clock, ArrowUpDown, Info, BookOpen, UserCircle, User, FileText, School, MessageSquare } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from 'next/image';
 import { config } from '@/config';
+import { useRouter } from 'next/navigation';
 
 interface StudyGroup {
   _id: string;
