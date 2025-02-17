@@ -61,10 +61,14 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
       return;
     }
 
+    // Determine the WebSocket URL based on the environment
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    console.log('Initializing socket connection to:', apiUrl);
+    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    
+    console.log('Initializing socket connection to:', wsUrl);
 
-    const socketInstance = io(apiUrl, {
+    const socketInstance = io(wsUrl, {
       auth: {
         token: token,
       },
