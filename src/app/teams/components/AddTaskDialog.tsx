@@ -58,7 +58,9 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
       const taskData = {
         title,
         description,
-        dueDate: dueDate.toISOString(),
+        dueDate: dueDate instanceof Date && !isNaN(dueDate.getTime()) 
+          ? dueDate.toISOString() 
+          : new Date().toISOString(),
         status: 'pending',
         assignedTo: selectedMembers.length > 0 ? selectedMembers : [team.createdBy._id]
       };
@@ -147,7 +149,14 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
               <div className="relative">
                 <DatePicker
                   selected={dueDate}
-                  onChange={(date: Date | null) => setDueDate(date)}
+                  onChange={(date: Date | null) => {
+                    if (date instanceof Date && !isNaN(date.getTime())) {
+                      setDueDate(date);
+                    } else {
+                      setDueDate(null);
+                      setError('Invalid date selected');
+                    }
+                  }}
                   showTimeSelect
                   timeFormat="HH:mm"
                   timeIntervals={15}
