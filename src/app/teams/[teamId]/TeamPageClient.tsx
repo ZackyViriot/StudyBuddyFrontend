@@ -84,8 +84,12 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-interface CalendarEvent extends Event {
+interface CalendarEvent {
   id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay: boolean;
   resource: any;
 }
 
@@ -187,6 +191,8 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
       return;
     }
     fetchTeam();
+    // Scroll to top when page loads
+    window.scrollTo(0, 0);
   }, [teamId, router]);
 
   const getTaskStatusColor = (status: string) => {
@@ -662,14 +668,23 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                 <div className="h-[550px]">
                   <BigCalendar
                     localizer={localizer}
-                    events={team.tasks.map(task => ({
-                      id: task._id || `temp-${Math.random()}`,
-                      title: task.title,
-                      start: new Date(task.dueDate),
-                      end: new Date(task.dueDate),
-                      allDay: true,
-                      resource: task
-                    }))}
+                    events={team.tasks
+                      .map(task => {
+                        const dueDate = new Date(task.dueDate);
+                        if (isNaN(dueDate.getTime())) {
+                          console.error('Invalid date for task:', task);
+                          return undefined;
+                        }
+                        return {
+                          id: task._id || `temp-${Math.random()}`,
+                          title: task.title,
+                          start: dueDate,
+                          end: dueDate,
+                          allDay: true,
+                          resource: task
+                        } as CalendarEvent;
+                      })
+                      .filter((event): event is CalendarEvent => event !== undefined)}
                     views={['month', 'week', 'day']}
                     defaultView="month"
                     view={view}
