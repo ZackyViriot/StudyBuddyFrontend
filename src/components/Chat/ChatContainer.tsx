@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Send } from 'lucide-react';
+import { config } from '@/config';
 
 interface Message {
   _id: string;
@@ -61,10 +62,8 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
       return;
     }
 
-    // Determine the WebSocket URL based on the environment
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    // Use the config to determine the WebSocket URL
+    const wsUrl = config.API_URL.replace(/^http/, 'ws');
     
     console.log('Initializing socket connection to:', wsUrl);
 
