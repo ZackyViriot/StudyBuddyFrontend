@@ -62,7 +62,7 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
           ? dueDate.toISOString() 
           : new Date().toISOString(),
         status: 'pending',
-        assignedTo: selectedMembers.length > 0 ? selectedMembers : [team.createdBy._id]
+        assignedTo: selectedMembers.length > 0 ? selectedMembers[0] : team.createdBy._id
       };
 
       const response = await fetch(`${config.API_URL}/api/teams/${team._id}/tasks`, {
@@ -81,8 +81,10 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
         throw new Error(errorData.message || 'Failed to create task');
       }
 
-      const data = await response.json();
-      onAddTask(data);
+      const updatedTeam = await response.json();
+      // Get the newly created task (it will be the last one in the array)
+      const newTask = updatedTeam.tasks[updatedTeam.tasks.length - 1];
+      onAddTask(newTask);
       resetForm();
       onClose();
     } catch (err) {
