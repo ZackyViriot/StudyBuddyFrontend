@@ -156,11 +156,8 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
 
       console.log('Fetching messages with token:', token);
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const baseUrl = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
-      
       const response = await fetch(
-        `${baseUrl}api/messages?roomId=${roomId}&roomType=${roomType}`,
+        `${config.API_URL}/api/messages?roomId=${roomId}&roomType=${roomType}`,
         {
           method: 'GET',
           headers: {
