@@ -109,7 +109,7 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
       });
     });
 
-    socketInstance.on('message', (message: Message) => {
+    socketInstance.on('newMessage', (message: Message) => {
       // Check if we've already added this message (either via optimistic update or previous receipt)
       if (!sentMessages.has(message._id)) {
         setMessages((prev) => [...prev, message]);
