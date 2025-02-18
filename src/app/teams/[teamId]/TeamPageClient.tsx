@@ -670,29 +670,51 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                     localizer={localizer}
                     events={team.tasks
                       .filter(task => {
+                        // Check if this is actually a task object
+                        if (!task || typeof task !== 'object') {
+                          console.warn('Invalid task object:', task);
+                          return false;
+                        }
+                        
+                        // Verify this is a task, not a team
+                        if ('members' in task || !('title' in task)) {
+                          console.warn('Object appears to be a team, not a task:', task);
+                          return false;
+                        }
+
                         if (!task._id) {
                           console.warn('Task missing _id:', task);
                           return false;
                         }
+                        
                         if (!task.dueDate) {
                           console.warn('Task missing dueDate:', task);
                           return false;
                         }
-                        const dueDate = new Date(task.dueDate);
-                        if (isNaN(dueDate.getTime())) {
-                          console.warn('Task has invalid dueDate:', task);
+
+                        try {
+                          const dueDate = new Date(task.dueDate);
+                          if (isNaN(dueDate.getTime())) {
+                            console.warn('Task has invalid dueDate:', task);
+                            return false;
+                          }
+                          return true;
+                        } catch (error) {
+                          console.warn('Error parsing task dueDate:', task, error);
                           return false;
                         }
-                        return true;
                       })
-                      .map(task => ({
-                        id: task._id,
-                        title: task.title,
-                        start: new Date(task.dueDate),
-                        end: new Date(task.dueDate),
-                        allDay: true,
-                        resource: task
-                      } as CalendarEvent))}
+                      .map(task => {
+                        const dueDate = new Date(task.dueDate);
+                        return {
+                          id: task._id,
+                          title: task.title,
+                          start: dueDate,
+                          end: dueDate,
+                          allDay: true,
+                          resource: task
+                        } as CalendarEvent;
+                      })}
                     views={['month', 'week', 'day']}
                     defaultView="month"
                     view={view}
