@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { GoalDetailsDialog } from './GoalDetailsDialog';
+import { config } from '@/config';
 
 interface TeamGoalsListProps {
   team: Team;
@@ -20,23 +22,27 @@ interface TeamGoalsListProps {
 
 export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoalsListProps) {
   const [goals, setGoals] = React.useState(team.goals || []);
-  const [unsavedProgress, setUnsavedProgress] = React.useState<Record<string, number>>({});
-  const activeGoals = goals.filter(goal => goal.status === 'active') || [];
-  const completedGoals = goals.filter(goal => goal.status === 'achieved') || [];
+  const [selectedGoal, setSelectedGoal] = React.useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
   // Update local goals when team prop changes
   React.useEffect(() => {
     setGoals(team.goals || []);
   }, [team.goals]);
 
-  const updateGoalProgress = async (goalId: string, progress: number) => {
-    if (!goalId) return;
-    
+  const handleGoalClick = (goal: any) => {
+    setSelectedGoal(goal);
+    setIsDetailsOpen(true);
+  };
+
+  const handleGoalUpdate = async (goalId: string, progress: number) => {
+    setIsUpdating(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${team._id}/goals/${goalId}`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${team._id}/goals/${goalId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -46,31 +52,19 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
           progress,
           status: progress === 100 ? 'achieved' : 'active'
         }),
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update goal progress');
+        throw new Error('Failed to update goal');
       }
 
-      // Refresh the team data
+      // Refresh the page to get updated data
       window.location.reload();
     } catch (error) {
-      console.error('Error updating goal progress:', error);
+      console.error('Error updating goal:', error);
+    } finally {
+      setIsUpdating(false);
     }
-  };
-
-  const handleSliderChange = (goalId: string, newValue: number) => {
-    setUnsavedProgress(prev => ({
-      ...prev,
-      [goalId]: newValue
-    }));
-  };
-
-  const getProgressColor = (value: number) => {
-    if (value < 30) return 'from-red-500 to-orange-500';
-    if (value < 70) return 'from-yellow-500 to-green-500';
-    return 'from-green-500 to-emerald-500';
   };
 
   return (
@@ -96,7 +90,8 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
         {team.goals.map((goal) => (
           <div
             key={goal._id}
-            className="p-4 rounded-lg border bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200"
+            onClick={() => handleGoalClick(goal)}
+            className="p-4 rounded-lg border bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -112,13 +107,20 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     Due: {format(new Date(goal.targetDate), 'MMM d, yyyy')}
                   </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Progress: {goal.progress}%
+                  </span>
                 </div>
               </div>
-              {goal.status !== 'achieved' && goal._id && (
+              {goal.status !== 'achieved' && (
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => updateGoalProgress(goal._id as string, 100)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGoalUpdate(goal._id as string, 100);
+                  }}
+                  disabled={isUpdating}
                   className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
                 >
                   <Check className="h-4 w-4 mr-1" />
@@ -136,6 +138,19 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
           </div>
         )}
       </div>
+
+      {selectedGoal && (
+        <GoalDetailsDialog
+          isOpen={isDetailsOpen}
+          onClose={() => {
+            setIsDetailsOpen(false);
+            setSelectedGoal(null);
+          }}
+          goal={selectedGoal}
+          teamId={team._id}
+          onGoalUpdate={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 } 
