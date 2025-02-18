@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
-import { Target, Calendar, Check, Clock } from 'lucide-react';
+import { Target, Calendar, Check, Clock, ArrowUpRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ export function GoalDetailsDialog({ isOpen, onClose, goal, teamId, onGoalUpdate 
   const [progress, setProgress] = useState(goal.progress || 0);
   const [error, setError] = useState<string | null>(null);
 
-  const updateGoalProgress = async (newProgress: number) => {
+  const updateGoalProgress = async (newProgress: number, newStatus?: string) => {
     setIsUpdating(true);
     setError(null);
 
@@ -47,7 +47,7 @@ export function GoalDetailsDialog({ isOpen, onClose, goal, teamId, onGoalUpdate 
         },
         body: JSON.stringify({
           progress: newProgress,
-          status: newProgress === 100 ? 'achieved' : 'active'
+          status: newStatus || (newProgress === 100 ? 'achieved' : 'active')
         }),
       });
 
@@ -123,6 +123,15 @@ export function GoalDetailsDialog({ isOpen, onClose, goal, teamId, onGoalUpdate 
               )}
               disabled={isUpdating}
             />
+            <Progress 
+              value={progress} 
+              className={cn(
+                "h-2",
+                goal.status === 'achieved' 
+                  ? "bg-green-100 dark:bg-green-950/20 [&>div]:bg-gradient-to-r [&>div]:from-green-500 [&>div]:to-emerald-500"
+                  : "bg-blue-100 dark:bg-blue-950/20 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-indigo-500"
+              )}
+            />
           </div>
 
           {error && (
@@ -141,7 +150,16 @@ export function GoalDetailsDialog({ isOpen, onClose, goal, teamId, onGoalUpdate 
           >
             Close
           </Button>
-          {goal.status !== 'achieved' && (
+          {goal.status === 'achieved' ? (
+            <Button
+              onClick={() => updateGoalProgress(progress, 'active')}
+              disabled={isUpdating}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              <ArrowUpRight className="h-4 w-4 mr-2" />
+              Reopen Goal
+            </Button>
+          ) : (
             <Button
               onClick={() => updateGoalProgress(progress)}
               disabled={isUpdating || progress === goal.progress}

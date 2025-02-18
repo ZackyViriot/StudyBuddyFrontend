@@ -119,7 +119,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
   const [team, setTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
   const [view, setView] = useState<View>('month');
@@ -822,10 +822,12 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                       )
                     }}
                     onSelectEvent={(event: CalendarEvent) => {
+                      setSelectedTask(event.resource);
                       setSelectedDate(event.start);
                     }}
                     onSelectSlot={({ start }: { start: Date }) => {
                       setSelectedDate(start);
+                      setIsAddTaskOpen(true);
                     }}
                     className="rounded-xl calendar-modern"
                     popup
@@ -1004,16 +1006,18 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
           onAddGoal={handleAddGoal}
         />
 
-        <TaskDetailsDialog
-          task={selectedTask}
-          isOpen={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onTaskUpdate={(updatedTask) => {
-            if (updatedTask._id) {
-              handleTaskStatusUpdate(updatedTask._id, updatedTask.status);
-            }
-          }}
-        />
+        {selectedTask && (
+          <TaskDetailsDialog
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+            task={selectedTask}
+            onTaskUpdate={(updatedTask) => {
+              if (updatedTask._id) {
+                handleTaskStatusUpdate(updatedTask._id, updatedTask.status);
+              }
+            }}
+          />
+        )}
 
         <MemberProfileDialog
           member={selectedMember}

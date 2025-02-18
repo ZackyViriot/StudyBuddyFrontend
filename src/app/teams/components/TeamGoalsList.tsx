@@ -4,7 +4,7 @@ import React from 'react';
 import { Team } from '@/types/team';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Check } from 'lucide-react';
+import { Target, Plus, Check, ArrowUpRight } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { motion } from 'framer-motion';
@@ -36,7 +36,7 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
     setIsDetailsOpen(true);
   };
 
-  const handleGoalUpdate = async (goalId: string, progress: number) => {
+  const handleGoalUpdate = async (goalId: string, status: string, progress: number) => {
     setIsUpdating(true);
     try {
       const token = localStorage.getItem('token');
@@ -50,7 +50,7 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
         },
         body: JSON.stringify({
           progress,
-          status: progress === 100 ? 'achieved' : 'active'
+          status
         }),
       });
 
@@ -96,29 +96,61 @@ export function TeamGoalsList({ team, currentUserId, onAddGoalClick }: TeamGoals
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <h4 className="font-medium text-base mb-1">{goal.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{goal.description}</p>
-                <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{goal.description}</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                    <span className={cn(
+                      "font-medium",
+                      goal.status === 'achieved' ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"
+                    )}>{goal.progress || 0}%</span>
+                  </div>
+                  <Progress 
+                    value={goal.progress || 0} 
+                    className={cn(
+                      "h-2",
+                      goal.status === 'achieved' 
+                        ? "bg-green-100 dark:bg-green-950/20 [&>div]:bg-gradient-to-r [&>div]:from-green-500 [&>div]:to-emerald-500"
+                        : "bg-blue-100 dark:bg-blue-950/20 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-indigo-500"
+                    )}
+                  />
+                </div>
+                <div className="flex items-center gap-3 flex-wrap mt-3">
                   <Badge 
                     variant="outline" 
-                    className={goal.status === 'achieved' ? 'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'}
+                    className={goal.status === 'achieved' ? 
+                      'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 
+                      'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                    }
                   >
                     {goal.status.charAt(0).toUpperCase() + goal.status.slice(1)}
                   </Badge>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     Due: {format(new Date(goal.targetDate), 'MMM d, yyyy')}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Progress: {goal.progress}%
-                  </span>
                 </div>
               </div>
-              {goal.status !== 'achieved' && (
+              {goal.status === 'achieved' ? (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleGoalUpdate(goal._id as string, 100);
+                    handleGoalUpdate(goal._id as string, 'active', goal.progress || 0);
+                  }}
+                  disabled={isUpdating}
+                  className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                >
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  Reopen
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGoalUpdate(goal._id as string, 'achieved', 100);
                   }}
                   disabled={isUpdating}
                   className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
