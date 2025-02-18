@@ -63,7 +63,7 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
         assignedTo: selectedMembers.length > 0 ? selectedMembers : [team.createdBy._id]
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${team._id}/tasks`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${team._id}/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
