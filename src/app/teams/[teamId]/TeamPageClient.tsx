@@ -669,22 +669,30 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                   <BigCalendar
                     localizer={localizer}
                     events={team.tasks
-                      .map(task => {
+                      .filter(task => {
+                        if (!task._id) {
+                          console.warn('Task missing _id:', task);
+                          return false;
+                        }
+                        if (!task.dueDate) {
+                          console.warn('Task missing dueDate:', task);
+                          return false;
+                        }
                         const dueDate = new Date(task.dueDate);
                         if (isNaN(dueDate.getTime())) {
-                          console.error('Invalid date for task:', task);
-                          return undefined;
+                          console.warn('Task has invalid dueDate:', task);
+                          return false;
                         }
-                        return {
-                          id: task._id || `temp-${Math.random()}`,
-                          title: task.title,
-                          start: dueDate,
-                          end: dueDate,
-                          allDay: true,
-                          resource: task
-                        } as CalendarEvent;
+                        return true;
                       })
-                      .filter((event): event is CalendarEvent => event !== undefined)}
+                      .map(task => ({
+                        id: task._id,
+                        title: task.title,
+                        start: new Date(task.dueDate),
+                        end: new Date(task.dueDate),
+                        allDay: true,
+                        resource: task
+                      } as CalendarEvent))}
                     views={['month', 'week', 'day']}
                     defaultView="month"
                     view={view}
