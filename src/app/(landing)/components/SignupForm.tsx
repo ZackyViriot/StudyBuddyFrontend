@@ -101,8 +101,8 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
         const response = await axios.post(`${config.API_URL}/api/auth/signup`, {
           email: formData.email,
           password: formData.password,
-          firstName: formData.firstname,
-          lastName: formData.lastname
+          firstname: formData.firstname,
+          lastname: formData.lastname
         });
 
         if (response.data) {
