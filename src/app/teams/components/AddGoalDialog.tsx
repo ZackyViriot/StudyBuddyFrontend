@@ -3,6 +3,7 @@
 import React from 'react';
 import { Team } from '@/types/team';
 import { Button } from '@/components/ui/button';
+import { config } from '@/config';
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,7 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${team._id}/goals`, {
+      const response = await fetch(`${config.API_URL}/api/teams/${team._id}/goals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,10 +62,9 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
         body: JSON.stringify({
           title,
           description,
-          targetDate,
+          targetDate: targetDate.toISOString(),
           status: 'active',
-          completed: progress === 100,
-          progress,
+          progress
         }),
       });
 
@@ -73,8 +73,10 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
         throw new Error(errorData.message || 'Failed to create goal');
       }
 
-      const goal = await response.json();
-      onAddGoal(goal);
+      const updatedTeam = await response.json();
+      // Get the newly created goal (it will be the last one in the array)
+      const newGoal = updatedTeam.goals[updatedTeam.goals.length - 1];
+      onAddGoal(newGoal);
       onClose();
       resetForm();
     } catch (error) {
@@ -158,7 +160,6 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
                   timeCaption="Time"
                   dateFormat="MMM d, yyyy h:mm aa"
                   placeholderText="Select date and time"
-                  minDate={new Date()}
                   required
                   calendarClassName="!bg-white dark:!bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg !p-3"
                   customInput={
