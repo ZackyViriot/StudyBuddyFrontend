@@ -402,22 +402,22 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
 
       <form
         onSubmit={handleSendMessage}
-        className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="p-3 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       >
         <div className="flex items-center gap-2">
           <Input
             value={newMessage}
             onChange={handleTyping}
             placeholder="Type a message..."
-            className="flex-1 rounded-full bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 focus:border-purple-500 shadow-sm hover:shadow-md focus:shadow-lg transition-all duration-200"
+            className="flex-1 h-9 rounded-full bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 focus:border-purple-500 shadow-sm hover:shadow-md focus:shadow-lg transition-all duration-200"
           />
           <Button 
             type="submit" 
             size="icon" 
-            className="rounded-full h-10 w-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
+            className="rounded-full h-9 w-9 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
             disabled={!newMessage.trim()}
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
       </form>
