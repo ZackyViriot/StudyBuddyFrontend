@@ -110,26 +110,31 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
     });
 
     socketInstance.on('newMessage', (message: Message) => {
-      // Only add the message if it's from another user
-      if (message.senderId._id !== currentUser?._id && !sentMessages.has(message._id)) {
-        setMessages((prev) => [...prev, message]);
+      // Only add messages from other users, not our own messages
+      if (message.senderId._id !== currentUser?._id) {
+        setMessages((prev) => {
+          // Check if message already exists
+          const messageExists = prev.some(m => m._id === message._id);
+          if (messageExists) return prev;
+          return [...prev, message];
+        });
         scrollToBottom();
       }
     });
 
     socketInstance.on('userTyping', ({ userId, username, isTyping }) => {
-      // Don't show typing indicator for current user
-      if (userId !== currentUser?._id) {
-        setTypingUsers((prev) => {
-          const newSet = new Set(prev);
-          if (isTyping) {
-            newSet.add(username);
-          } else {
-            newSet.delete(username);
-          }
-          return newSet;
-        });
-      }
+      // Skip typing indicators for the current user completely
+      if (userId === currentUser?._id) return;
+      
+      setTypingUsers((prev) => {
+        const newSet = new Set(prev);
+        if (isTyping) {
+          newSet.add(username);
+        } else {
+          newSet.delete(username);
+        }
+        return newSet;
+      });
     });
 
     setSocket(socketInstance);
@@ -143,7 +148,7 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
         socketInstance.disconnect();
       }
     };
-  }, [roomId, roomType]);
+  }, [roomId, roomType, currentUser]);
 
   useEffect(() => {
     scrollToBottom();
@@ -213,16 +218,20 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
     
     const token = localStorage.getItem('token');
     if (!socket || !newMessage.trim() || !token) return;
+
+    const messageContent = newMessage.trim();
+    setNewMessage(''); // Clear input immediately
+    setIsTyping(false);
 
     try {
       const tempId = Date.now().toString();
       const optimisticMessage: Message = {
         _id: tempId,
-        content: newMessage.trim(),
+        content: messageContent,
         senderId: {
           _id: currentUser._id || '',
           username: currentUser.username || '',
@@ -235,30 +244,26 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
         isPending: true,
       };
 
-      // Add message immediately to the UI
-      setMessages((prev) => [...prev, optimisticMessage]);
-      sentMessages.add(tempId);
-      setNewMessage('');
-      setIsTyping(false);
+      // Add optimistic message to UI
+      setMessages(prev => [...prev, optimisticMessage]);
 
       // Emit the message
       socket.emit('sendMessage', {
-        content: newMessage.trim(),
+        content: messageContent,
         roomId,
         roomType,
       }, (response: any) => {
         if (response.error) {
           throw new Error(response.error);
         }
-        // Update the optimistic message with the real one
-        setMessages((prev) => 
-          prev.map(msg => 
-            msg._id === tempId ? { ...response.message, isPending: false } : msg
-          )
+
+        // Replace optimistic message with real one
+        setMessages(prev => 
+          prev.map(msg => msg._id === tempId ? { ...response.message, isPending: false } : msg)
         );
-        sentMessages.add(response.message._id);
       });
 
+      // Stop typing indicator
       socket.emit('typing', { roomId, roomType, isTyping: false });
       
       // Scroll to bottom after sending
@@ -278,12 +283,15 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
 
     if (!socket) return;
 
-    if (!isTyping && e.target.value) {
-      setIsTyping(true);
-      socket.emit('typing', { roomId, roomType, isTyping: true });
-    } else if (isTyping && !e.target.value) {
-      setIsTyping(false);
-      socket.emit('typing', { roomId, roomType, isTyping: false });
+    // Don't emit typing events for the current user
+    if (currentUser?._id) {
+      if (!isTyping && e.target.value) {
+        setIsTyping(true);
+        socket.emit('typing', { roomId, roomType, isTyping: true });
+      } else if (isTyping && !e.target.value) {
+        setIsTyping(false);
+        socket.emit('typing', { roomId, roomType, isTyping: false });
+      }
     }
   };
 
