@@ -349,28 +349,63 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}`, {
+      // Validate the form data
+      if (selectedMeetingDays.length === 0) {
+        throw new Error('Please select at least one meeting day');
+      }
+      if (!meetingFormData.meetingTime) {
+        throw new Error('Please set a meeting time');
+      }
+      if (!meetingFormData.meetingLocation && meetingFormData.meetingType === 'online') {
+        throw new Error('Please provide a meeting link for online meetings');
+      }
+      if (!meetingFormData.meetingLocation && meetingFormData.meetingType === 'in-person') {
+        throw new Error('Please provide a location for in-person meetings');
+      }
+
+      const updateData = {
+        meetingType: meetingFormData.meetingType,
+        meetingDays: selectedMeetingDays,
+        meetingLocation: meetingFormData.meetingLocation,
+        meetingTime: meetingFormData.meetingTime,
+      };
+
+      console.log('Updating meeting schedule with data:', updateData);
+
+      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/schedule`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          meetingType: meetingFormData.meetingType,
-          meetingDays: selectedMeetingDays,
-          meetingLocation: meetingFormData.meetingLocation,
-          meetingTime: meetingFormData.meetingTime,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update meeting details');
+        const errorData = await response.json();
+        console.error('Server error response:', errorData);
+        throw new Error(errorData.message || 'Failed to update meeting schedule');
       }
+
+      const data = await response.json();
+      console.log('Meeting schedule updated successfully:', data);
+
+      // Show success message
+      toast({
+        title: 'Success',
+        description: 'Meeting schedule has been updated',
+        variant: 'default',
+      });
 
       await fetchGroup();
       setIsCreateMeetingOpen(false);
     } catch (error) {
-      console.error('Error updating meeting details:', error);
+      console.error('Error updating meeting schedule:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update meeting schedule',
+        variant: 'destructive',
+      });
     }
   };
 
