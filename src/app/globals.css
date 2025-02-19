@@ -94,3 +94,92 @@ main {
   transition-property: transform, opacity, box-shadow !important;
 }
 
+/* Calendar Styles */
+.calendar-modern .rbc-calendar {
+  @apply font-sans;
+}
+
+.calendar-modern .rbc-header {
+  @apply bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-medium py-3 border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-month-view {
+  @apply border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden;
+}
+
+.calendar-modern .rbc-day-bg {
+  @apply transition-colors duration-200;
+}
+
+.calendar-modern .rbc-off-range-bg {
+  @apply bg-gray-50 dark:bg-gray-800/50;
+}
+
+.calendar-modern .rbc-today {
+  @apply bg-purple-50 dark:bg-purple-900/20;
+}
+
+.calendar-modern .rbc-event {
+  @apply rounded-lg px-2 py-1 text-sm font-medium;
+}
+
+.calendar-modern .rbc-show-more {
+  @apply text-purple-600 dark:text-purple-400 font-medium;
+}
+
+.calendar-modern .rbc-toolbar button {
+  @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 font-medium transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700;
+}
+
+.calendar-modern .rbc-toolbar button.rbc-active {
+  @apply bg-purple-600 dark:bg-purple-500 text-white border-purple-600 dark:border-purple-500;
+}
+
+.calendar-modern .rbc-month-row + .rbc-month-row {
+  @apply border-t border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-day-bg + .rbc-day-bg {
+  @apply border-l border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-header + .rbc-header {
+  @apply border-l border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-toolbar {
+  @apply mb-4;
+}
+
+.calendar-modern .rbc-toolbar-label {
+  @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.calendar-modern .rbc-agenda-view table.rbc-agenda-table {
+  @apply border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  @apply border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.calendar-modern .rbc-time-view {
+  @apply border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-time-view .rbc-time-header {
+  @apply border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-time-view .rbc-time-content {
+  @apply border-gray-100 dark:border-gray-700;
+}
+
+.calendar-modern .rbc-current-time-indicator {
+  @apply bg-purple-600 dark:bg-purple-500;
+}
+

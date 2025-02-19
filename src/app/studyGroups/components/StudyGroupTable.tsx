@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, Calendar, Clock, ArrowUpDown, Info, BookOpen, UserCircle, User, FileText, School, MessageSquare } from 'lucide-react';
+import { Users, MapPin, Calendar, Clock, ArrowUpDown, Info, BookOpen, UserCircle, User, FileText, School, MessageSquare, ArrowUpRight, Plus, Trash2, LogOut } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 import Image from 'next/image';
 import { config } from '@/config';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 interface StudyGroup {
   _id: string;
@@ -98,6 +99,7 @@ const ProfilePicture = ({ src, name, size = 40 }: { src: string | undefined | nu
 };
 
 export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyGroupTableProps) {
+  const router = useRouter();
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [selectedGroup, setSelectedGroup] = useState<StudyGroup | null>(null);
@@ -203,6 +205,11 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
     }
   };
 
+  // Add function to handle view button click
+  const handleViewGroup = (groupId: string) => {
+    router.push(`/studyGroups/${groupId}`);
+  };
+
   return (
     <>
       <div className="space-y-4">
@@ -221,147 +228,169 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
         </div>
 
         {/* Table */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
-          <div className="max-h-[600px] overflow-y-auto">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+          <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
-                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/95">
-                  <th className="min-w-[200px] px-4 py-3 text-left backdrop-blur-sm">
-                    <Button
-                      variant="ghost"
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50/50 to-white dark:from-gray-800/50 dark:to-gray-800/90 backdrop-blur-sm">
+                  <th className="px-6 py-4 text-left">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => handleSort('name')}
-                      className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
+                      className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                     >
-                      Group Name
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                      Group
+                      <ArrowUpDown className="h-4 w-4" />
+                    </motion.button>
                   </th>
-                  <th className="hidden md:table-cell px-4 py-3 text-left backdrop-blur-sm">
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">Description</span>
+                  <th className="px-6 py-4 text-left">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">Description</span>
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 text-left backdrop-blur-sm">
-                    <Button
-                      variant="ghost"
+                  <th className="px-6 py-4 text-left">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => handleSort('members')}
-                      className="hover:bg-transparent font-semibold text-indigo-600 dark:text-indigo-400"
+                      className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                     >
                       Members
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                      <ArrowUpDown className="h-4 w-4" />
+                    </motion.button>
                   </th>
-                  <th className="hidden sm:table-cell px-4 py-3 text-left backdrop-blur-sm">
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">Details</span>
+                  <th className="px-6 py-4 text-left">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleSort('meetingType')}
+                      className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      Meeting Type
+                      <ArrowUpDown className="h-4 w-4" />
+                    </motion.button>
                   </th>
-                  <th className="px-4 py-3 text-left backdrop-blur-sm">
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">Actions</span>
+                  <th className="px-6 py-4 text-right">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">Actions</span>
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredGroups.map((group) => (
-                  <tr 
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredGroups.map((group, index) => (
+                  <motion.tr
                     key={group._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-t border-gray-200 dark:border-gray-700"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="hidden sm:block">
+                        <motion.div 
+                          whileHover={{ scale: 1.05 }}
+                          className="relative flex-shrink-0"
+                        >
                           <ProfilePicture 
                             src={group.createdBy ? getProfilePictureUrl(group.createdBy.profilePicture) : null}
                             name={group.createdBy ? `${group.createdBy.firstname} ${group.createdBy.lastname}` : 'Unknown'}
                             size={40}
                           />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-semibold text-gray-900 dark:text-white truncate">
+                        </motion.div>
+                        <div>
+                          <motion.div 
+                            className="font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+                            whileHover={{ x: 3 }}
+                          >
                             {group.name}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <span className="truncate hidden sm:inline">by {group.createdBy ? `${group.createdBy.firstname} ${group.createdBy.lastname}` : 'Unknown'}</span>
-                            {/* Show member count on mobile */}
-                            <span className="sm:hidden flex items-center">
-                              <Users className="h-3 w-3 mr-1" />
-                              {group.members.length}
-                            </span>
-                          </div>
-                          {/* Show description on mobile */}
-                          <div className="md:hidden text-sm text-gray-600 dark:text-gray-300 line-clamp-1 mt-1">
-                            {group.description}
+                          </motion.div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            by {group.createdBy ? `${group.createdBy.firstname} ${group.createdBy.lastname}` : 'Unknown'}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="hidden md:table-cell px-4 py-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 max-w-[200px]">
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 max-w-md">
                         {group.description}
                       </p>
                     </td>
-                    <td className="hidden sm:table-cell px-4 py-3">
+                    <td className="px-6 py-4">
                       <Badge 
                         variant="secondary" 
-                        className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 cursor-pointer transition-colors whitespace-nowrap"
-                        onClick={(e: React.MouseEvent) => {
+                        className="bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-700 cursor-pointer hover:scale-105 transition-transform"
+                        onClick={(e) => {
                           e.stopPropagation();
                           setShowMembersGroup(group);
                         }}
                       >
                         <Users className="h-3 w-3 mr-1" />
-                        {group.members.length}
+                        {group.members.length} members
                       </Badge>
                     </td>
-                    <td className="hidden sm:table-cell px-4 py-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-                        onClick={() => setSelectedGroup(group)}
+                    <td className="px-6 py-4">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-700"
                       >
-                        <Info className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
+                        {group.meetingType}
+                      </Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        {/* Show Details button on mobile */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="sm:hidden border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
                           onClick={() => setSelectedGroup(group)}
                         >
-                          <Info className="h-4 w-4" />
-                        </Button>
+                          <Info className="h-5 w-5" />
+                        </motion.button>
                         {isMemberMap[group._id] ? (
-                          <Button
-                            onClick={() => setConfirmationDialog({
-                              isOpen: true,
-                              groupId: group._id,
-                              action: isCreator(group) ? 'delete' : 'leave',
-                              groupName: group.name
-                            })}
-                            variant="destructive"
-                            size="sm"
-                            className={`${isCreator(group) 
-                              ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
-                              : "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-                            } sm:w-full`}
-                          >
-                            <span className="hidden sm:inline">{isCreator(group) ? 'Delete' : 'Leave'}</span>
-                            <span className="sm:hidden">×</span>
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleViewGroup(group._id)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium shadow-sm hover:shadow-md transition-all"
+                            >
+                              View
+                              <ArrowUpRight className="h-4 w-4" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setConfirmationDialog({
+                                isOpen: true,
+                                groupId: group._id,
+                                action: isCreator(group) ? 'delete' : 'leave',
+                                groupName: group.name
+                              })}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium shadow-sm hover:shadow-md transition-all ${
+                                isCreator(group)
+                                  ? "bg-red-600 hover:bg-red-700"
+                                  : "bg-orange-500 hover:bg-orange-600"
+                              }`}
+                            >
+                              {isCreator(group) ? (
+                                <>Delete</>
+                              ) : (
+                                <>Leave</>
+                              )}
+                            </motion.button>
+                          </div>
                         ) : (
-                          <Button
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={() => onJoin(group._id)}
-                            size="sm"
-                            className="sm:w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium shadow-sm hover:shadow-md transition-all"
                           >
-                            <span className="hidden sm:inline">Join</span>
-                            <span className="sm:hidden">+</span>
-                          </Button>
+                            Join
+                            <Plus className="h-4 w-4" />
+                          </motion.button>
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -726,29 +755,31 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
         open={confirmationDialog.isOpen} 
         onOpenChange={(isOpen) => setConfirmationDialog(prev => ({ ...prev, isOpen }))}
       >
-        <DialogContent className="sm:max-w-[425px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
+        <DialogContent className="sm:max-w-[425px] p-6 dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
               {confirmationDialog.action === 'delete' ? (
-                <>
-                  <span className="text-red-600 dark:text-red-500">
-                    Delete Group
-                  </span>
-                </>
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-500">
+                  <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                    <Trash2 className="h-5 w-5" />
+                  </div>
+                  Delete Group
+                </div>
               ) : (
-                <>
-                  <span className="text-orange-600 dark:text-orange-500">
-                    Leave Group
-                  </span>
-                </>
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-500">
+                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                    <LogOut className="h-5 w-5" />
+                  </div>
+                  Leave Group
+                </div>
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-6">
             <p className="text-gray-600 dark:text-gray-300">
               {confirmationDialog.action === 'delete' 
-                ? `Are you sure you want to delete &ldquo;${confirmationDialog.groupName}&rdquo;? This action cannot be undone.`
-                : `Are you sure you want to leave &ldquo;${confirmationDialog.groupName}&rdquo;? You can always join back later.`
+                ? `Are you sure you want to delete "${confirmationDialog.groupName}"? This action cannot be undone.`
+                : `Are you sure you want to leave "${confirmationDialog.groupName}"? You can always join back later.`
               }
             </p>
           </div>
@@ -756,19 +787,30 @@ export function StudyGroupTable({ groups, isMemberMap, onJoin, onLeave }: StudyG
             <Button
               variant="outline"
               onClick={() => setConfirmationDialog(prev => ({ ...prev, isOpen: false }))}
-              className="border-gray-200 dark:border-gray-700"
+              className="border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleConfirmAction}
-              className={confirmationDialog.action === 'delete' 
+              className={`flex items-center gap-2 ${
+                confirmationDialog.action === 'delete' 
                 ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
                 : "bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800"
-              }
+              }`}
             >
-              {confirmationDialog.action === 'delete' ? 'Delete' : 'Leave'}
+              {confirmationDialog.action === 'delete' ? (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </>
+              ) : (
+                <>
+                  <LogOut className="h-4 w-4" />
+                  Leave
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>

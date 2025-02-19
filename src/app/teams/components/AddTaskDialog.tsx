@@ -111,6 +111,20 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
     );
   };
 
+  const allMembers = [
+    // Add creator
+    { userId: team.createdBy, role: 'admin' },
+    // Add all other members, handling both team and study group structures
+    ...(Array.isArray(team.members) ? team.members.map(member => ({
+      userId: member.userId || member,
+      role: member.role || 'member'
+    })) : [])
+  ]
+    .filter(member => 
+      member.userId && 
+      member.userId._id
+    )
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[525px] bg-white dark:bg-gray-800/95 dark:backdrop-blur-xl border-gray-200 dark:border-gray-700">
@@ -226,39 +240,29 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
             <div className="grid gap-2">
               <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assign Members</Label>
               <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                {[
-                  // Add creator as the first member
-                  { userId: team.createdBy, role: 'admin' },
-                  // Add all other team members
-                  ...team.members
-                ]
-                  .filter(member => 
-                    member.userId && 
-                    member.userId._id
-                  )
-                  .map((member) => {
-                    const user = member.userId;
-                    const displayName = user.name || `${user.firstname} ${user.lastname}`;
-                    return (
-                      <div
-                        key={user._id}
-                        onClick={() => toggleMember(user._id)}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
-                          selectedMembers.includes(user._id)
-                            ? "bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {displayName}
-                        </span>
-                        {selectedMembers.includes(user._id) && (
-                          <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                        )}
-                      </div>
-                    );
-                  })}
+                {allMembers.map((member) => {
+                  const user = member.userId;
+                  const displayName = user.name || `${user.firstname} ${user.lastname}`;
+                  return (
+                    <div
+                      key={user._id}
+                      onClick={() => toggleMember(user._id)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
+                        selectedMembers.includes(user._id)
+                          ? "bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                      )}
+                    >
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {displayName}
+                      </span>
+                      {selectedMembers.includes(user._id) && (
+                        <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

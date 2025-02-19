@@ -424,70 +424,66 @@ export default function StudyGroupsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex flex-col gap-8">
           {/* My Study Groups Section */}
-          <div className="lg:sticky lg:top-4 h-fit">
-            <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
-                    <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      My Study Groups
-                    </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Groups you&apos;re a member of
-                    </p>
-                  </div>
-                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
-                    {filteredMyGroups.length} groups
-                  </span>
+          <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                  <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <StudyGroupTable
-                  groups={filteredMyGroups}
-                  isMemberMap={Object.fromEntries(myGroups.map(group => [group._id, true]))}
-                  onJoin={handleJoinGroup}
-                  onLeave={handleLeaveGroup}
-                />
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    My Study Groups
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Groups you&apos;re a member of
+                  </p>
+                </div>
+                <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
+                  {filteredMyGroups.length} groups
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <StudyGroupTable
+                groups={filteredMyGroups}
+                isMemberMap={Object.fromEntries(myGroups.map(group => [group._id, true]))}
+                onJoin={handleJoinGroup}
+                onLeave={handleLeaveGroup}
+              />
+            </CardContent>
+          </Card>
 
           {/* All Study Groups Section */}
-          <div>
-            <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
-                    <Search className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      All Study Groups
-                    </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Discover and join study groups
-                    </p>
-                  </div>
-                  <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
-                    {filteredAllGroups.length} groups
-                  </span>
+          <Card className="hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800/30 dark:backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100/90 to-indigo-200/90 dark:from-indigo-600/10 dark:to-indigo-500/10 backdrop-blur-sm">
+                  <Search className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <StudyGroupTable
-                  groups={filteredAllGroups}
-                  isMemberMap={Object.fromEntries(allGroups.map(group => [group._id, isUserInGroup(group)]))}
-                  onJoin={handleJoinGroup}
-                  onLeave={handleLeaveGroup}
-                />
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    All Study Groups
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Discover and join study groups
+                  </p>
+                </div>
+                <span className="ml-auto px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-br from-indigo-100/80 to-indigo-200/80 dark:from-indigo-600/10 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20 backdrop-blur-sm">
+                  {filteredAllGroups.length} groups
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <StudyGroupTable
+                groups={filteredAllGroups}
+                isMemberMap={Object.fromEntries(allGroups.map(group => [group._id, isUserInGroup(group)]))}
+                onJoin={handleJoinGroup}
+                onLeave={handleLeaveGroup}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
