@@ -677,83 +677,119 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                         Update Meeting
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[425px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
                       <DialogHeader>
-                        <DialogTitle>Update Meeting Details</DialogTitle>
+                        <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
+                          Update Meeting Schedule
+                        </DialogTitle>
                       </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="meetingType">Meeting Type</Label>
-                          <select
-                            id="meetingType"
-                            value={meetingFormData.meetingType}
-                            onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingType: e.target.value })}
-                            className="w-full rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
-                          >
+                      <div className="grid gap-6 py-4">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                            <Video className="h-5 w-5" />
+                            <h3 className="font-semibold">Meeting Format</h3>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
                             {MEETING_TYPES.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.icon} {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label>Meeting Days</Label>
-                          <div className="grid grid-cols-4 gap-2">
-                            {DAYS_OF_WEEK.map((day) => (
-                              <div key={day} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={day}
-                                  checked={selectedMeetingDays.includes(day)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedMeetingDays([...selectedMeetingDays, day]);
-                                    } else {
-                                      setSelectedMeetingDays(selectedMeetingDays.filter((d) => d !== day));
-                                    }
-                                  }}
+                              <label
+                                key={type.value}
+                                className={`
+                                  relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer
+                                  transition-all duration-200
+                                  ${meetingFormData.meetingType === type.value 
+                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800'
+                                  }
+                                `}
+                              >
+                                <input
+                                  type="radio"
+                                  name="meetingType"
+                                  value={type.value}
+                                  checked={meetingFormData.meetingType === type.value}
+                                  onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingType: e.target.value })}
+                                  className="sr-only"
                                 />
-                                <Label htmlFor={day} className="text-sm">
-                                  {day.slice(0, 3)}
-                                </Label>
-                              </div>
+                                <span className="text-2xl">{type.icon}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{type.label}</span>
+                              </label>
                             ))}
                           </div>
                         </div>
 
-                        <div className="grid gap-2">
-                          <Label htmlFor="meetingTime">Meeting Time</Label>
-                          <Input
-                            id="meetingTime"
-                            type="time"
-                            value={meetingFormData.meetingTime}
-                            onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingTime: e.target.value })}
-                          />
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                            <Calendar className="h-5 w-5" />
+                            <h3 className="font-semibold">Meeting Schedule</h3>
+                          </div>
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Days</Label>
+                              <div className="grid grid-cols-4 gap-2 mt-2">
+                                {DAYS_OF_WEEK.map((day) => (
+                                  <div key={day} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={day}
+                                      checked={selectedMeetingDays.includes(day)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setSelectedMeetingDays([...selectedMeetingDays, day]);
+                                        } else {
+                                          setSelectedMeetingDays(selectedMeetingDays.filter((d) => d !== day));
+                                        }
+                                      }}
+                                      className="border-gray-300 dark:border-gray-600"
+                                    />
+                                    <Label htmlFor={day} className="text-sm">
+                                      {day.slice(0, 3)}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="meetingTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Time</Label>
+                              <Input
+                                id="meetingTime"
+                                type="time"
+                                value={meetingFormData.meetingTime}
+                                onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingTime: e.target.value })}
+                                className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
+                              />
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="grid gap-2">
-                          <Label htmlFor="meetingLocation">
-                            {meetingFormData.meetingType === 'online' ? 'Meeting Link' : 'Meeting Location'}
-                          </Label>
-                          <Input
-                            id="meetingLocation"
-                            value={meetingFormData.meetingLocation}
-                            onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingLocation: e.target.value })}
-                            placeholder={
-                              meetingFormData.meetingType === 'online'
-                                ? 'Enter meeting link (e.g., Zoom, Teams)'
-                                : 'Enter physical location'
-                            }
-                          />
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                            <MapPin className="h-5 w-5" />
+                            <h3 className="font-semibold">Meeting Location</h3>
+                          </div>
+                          <div>
+                            <Label htmlFor="meetingLocation" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {meetingFormData.meetingType === 'online' ? 'Meeting Link' : 'Location'}
+                            </Label>
+                            <Input
+                              id="meetingLocation"
+                              value={meetingFormData.meetingLocation}
+                              onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingLocation: e.target.value })}
+                              placeholder={
+                                meetingFormData.meetingType === 'online'
+                                  ? 'Enter meeting link (e.g., Zoom, Teams)'
+                                  : 'Enter physical location'
+                              }
+                              className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="flex justify-end">
+                      <div className="flex justify-end pt-4">
                         <Button
                           onClick={handleUpdateMeeting}
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                          className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
                         >
-                          Update Meeting
+                          Update Schedule
                         </Button>
                       </div>
                     </DialogContent>
