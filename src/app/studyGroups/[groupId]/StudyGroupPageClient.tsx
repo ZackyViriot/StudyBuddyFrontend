@@ -364,16 +364,18 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       }
 
       const updateData = {
-        meetingType: meetingFormData.meetingType,
-        meetingDays: selectedMeetingDays,
-        meetingLocation: meetingFormData.meetingLocation,
-        meetingTime: meetingFormData.meetingTime,
+        schedule: {
+          meetingType: meetingFormData.meetingType,
+          meetingDays: selectedMeetingDays,
+          meetingLocation: meetingFormData.meetingLocation,
+          meetingTime: meetingFormData.meetingTime,
+        }
       };
 
       console.log('Updating meeting schedule with data:', updateData);
 
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}`, {
-        method: 'PATCH',
+      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/schedule`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
