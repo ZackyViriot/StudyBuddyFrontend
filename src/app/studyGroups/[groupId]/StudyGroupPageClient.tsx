@@ -372,7 +372,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
       console.log('Updating meeting schedule with data:', updateData);
 
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/schedule`, {
+      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
