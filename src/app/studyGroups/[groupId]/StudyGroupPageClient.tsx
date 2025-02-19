@@ -181,6 +181,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
     location: '',
     meetingType: 'online'
   });
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
 
   const fetchGroup = async () => {
     try {
@@ -497,8 +498,8 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
           {/* Chat Section */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[calc(100vh-32rem)] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
                     <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -509,7 +510,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-0 h-[calc(100%-5rem)]">
+              <CardContent className="p-0 h-[calc(100%-4.5rem)]">
                 <ChatContainer key={group._id} roomId={group._id} roomType="study-group" />
               </CardContent>
             </Card>
@@ -566,6 +567,8 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                     onSelectEvent={(event: CalendarEvent) => {
                       if (event.resource.type === 'task') {
                         setSelectedTask(event.resource);
+                      } else if (event.resource.type === 'meeting' || event.resource.type === 'study-session') {
+                        setSelectedMeeting(event.resource);
                       }
                     }}
                     eventPropGetter={(event) => ({
@@ -956,6 +959,85 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
             >
               Add Session
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Meeting Details Dialog */}
+      <Dialog open={!!selectedMeeting} onOpenChange={() => setSelectedMeeting(null)}>
+        <DialogContent className="sm:max-w-[500px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
+              {selectedMeeting?.type === 'meeting' ? 'Regular Meeting' : 'Study Session'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            {selectedMeeting?.type === 'study-session' && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                    <BookOpen className="h-5 w-5" />
+                    <h3 className="font-semibold">Session Details</h3>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{selectedMeeting?.subject}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedMeeting?.description}</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <Calendar className="h-5 w-5" />
+                <h3 className="font-semibold">Date & Time</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</h4>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">
+                    {selectedMeeting ? (
+                      selectedMeeting.type === 'study-session' 
+                        ? format(new Date(selectedMeeting.date + 'T' + selectedMeeting.startTime), 'PPP')
+                        : selectedMeeting.start ? format(new Date(selectedMeeting.start), 'PPP') : 'Not specified'
+                    ) : 'Not specified'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time</h4>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">
+                    {selectedMeeting ? (
+                      selectedMeeting.type === 'study-session'
+                        ? `${format(new Date('2000-01-01T' + selectedMeeting.startTime), 'p')} - ${format(new Date('2000-01-01T' + selectedMeeting.endTime), 'p')}`
+                        : selectedMeeting.start && selectedMeeting.end 
+                          ? `${format(new Date(selectedMeeting.start), 'p')} - ${format(new Date(selectedMeeting.end), 'p')}`
+                          : 'Not specified'
+                    ) : 'Not specified'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <MapPin className="h-5 w-5" />
+                <h3 className="font-semibold">Meeting Details</h3>
+              </div>
+              <div className="grid gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Type</h4>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 capitalize">{selectedMeeting?.meetingType}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {selectedMeeting?.meetingType === 'online' ? 'Meeting Link' : 'Location'}
+                  </h4>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">
+                    {selectedMeeting?.location || selectedMeeting?.meetingLocation || 'Not specified'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

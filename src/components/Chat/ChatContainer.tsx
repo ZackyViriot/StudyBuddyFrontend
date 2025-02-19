@@ -308,118 +308,114 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background border rounded-lg shadow-sm overflow-hidden font-outfit">
-      <ScrollArea className="flex-1 p-4">
-        <div className="flex flex-col justify-end min-h-full py-4">
-          <div className="flex flex-col space-y-4">
-            {messages.map((message, index) => {
-              const isCurrentUser = message.senderId._id === currentUser?._id;
-              const showAvatar = index === 0 || 
-                messages[index - 1].senderId._id !== message.senderId._id;
-              const isLastInGroup = index === messages.length - 1 || 
-                messages[index + 1]?.senderId._id !== message.senderId._id;
+    <div className="flex flex-col h-full max-h-[calc(100%-1rem)]">
+      <ScrollArea className="flex-1 p-2 overflow-y-auto">
+        <div className="space-y-2">
+          {messages.map((message, index) => {
+            const isCurrentUser = message.senderId._id === currentUser?._id;
+            const showAvatar = index === 0 || 
+              messages[index - 1].senderId._id !== message.senderId._id;
+            const isLastInGroup = index === messages.length - 1 || 
+              messages[index + 1]?.senderId._id !== message.senderId._id;
 
-              return (
+            return (
+              <div
+                key={message._id}
+                className={cn(
+                  "flex gap-2 group animate-in slide-in-from-bottom-2",
+                  isCurrentUser ? "flex-row-reverse" : "flex-row",
+                  !isLastInGroup && "mb-1"
+                )}
+              >
                 <div
-                  key={message._id}
                   className={cn(
-                    "flex gap-3 group animate-in slide-in-from-bottom-2",
-                    isCurrentUser ? "flex-row-reverse" : "flex-row",
-                    !isLastInGroup && "mb-2"
+                    "flex flex-col max-w-[80%] space-y-0.5",
+                    isCurrentUser ? "items-end" : "items-start"
                   )}
                 >
                   <div
                     className={cn(
-                      "flex flex-col max-w-[80%] space-y-1",
-                      isCurrentUser ? "items-end" : "items-start"
+                      "relative rounded-2xl px-3 py-2 text-sm break-words transition-all duration-300",
+                      isCurrentUser
+                        ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:shadow-purple-500/25 hover:-translate-y-0.5"
+                        : "bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 text-foreground shadow-md hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5",
+                      message.isPending && "opacity-70"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "relative rounded-2xl px-4 py-2.5 text-sm break-words transition-all duration-300",
-                        isCurrentUser
-                          ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:shadow-purple-500/25 hover:-translate-y-0.5"
-                          : "bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 text-foreground shadow-md hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5",
-                        message.isPending && "opacity-70"
-                      )}
-                    >
-                      {message.content}
-                    </div>
-                    <div className={cn(
-                      "flex items-center gap-2 px-2 transition-opacity duration-200",
-                      isCurrentUser ? "flex-row-reverse" : "flex-row",
-                      "opacity-60 group-hover:opacity-100"
-                    )}>
-                      <span className={cn(
-                        "text-xs font-medium",
-                        isCurrentUser 
-                          ? "text-purple-500 dark:text-purple-400" 
-                          : "text-purple-600 dark:text-purple-500"
-                      )}>
-                        {isCurrentUser ? 'You' : `${message.senderId.firstname} ${message.senderId.lastname}`}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/60">
-                        {formatTime(message.createdAt)}
-                        {message.isEdited && " (edited)"}
-                        {message.isPending && (
-                          <span className="inline-flex items-center ml-1">
-                            <span className="animate-pulse">sending</span>
-                            <span className="inline-flex gap-0.5">
-                              <span className="animate-bounce delay-0">.</span>
-                              <span className="animate-bounce delay-100">.</span>
-                              <span className="animate-bounce delay-200">.</span>
-                            </span>
-                          </span>
-                        )}
-                      </span>
-                    </div>
+                    {message.content}
                   </div>
-                </div>
-              );
-            })}
-            {typingUsers.size > 0 && (
-              <div className="flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2">
-                <div className="flex flex-col max-w-[80%] space-y-1">
-                  <div className="bg-purple-100 dark:bg-purple-900/30 text-muted-foreground rounded-2xl px-4 py-2.5 text-sm">
-                    <span className="inline-flex items-center gap-1">
-                      <span className="animate-pulse">
-                        {Array.from(typingUsers).join(", ")} {typingUsers.size === 1 ? "is" : "are"} typing
-                      </span>
-                      <span className="inline-flex gap-0.5">
-                        <span className="animate-bounce delay-0">.</span>
-                        <span className="animate-bounce delay-100">.</span>
-                        <span className="animate-bounce delay-200">.</span>
-                      </span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-2 transition-opacity duration-200",
+                    isCurrentUser ? "flex-row-reverse" : "flex-row",
+                    "opacity-60 group-hover:opacity-100"
+                  )}>
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isCurrentUser 
+                        ? "text-purple-500 dark:text-purple-400" 
+                        : "text-purple-600 dark:text-purple-500"
+                    )}>
+                      {isCurrentUser ? 'You' : `${message.senderId.firstname} ${message.senderId.lastname}`}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {formatTime(message.createdAt)}
+                      {message.isEdited && " (edited)"}
+                      {message.isPending && (
+                        <span className="inline-flex items-center ml-1">
+                          <span className="animate-pulse">sending</span>
+                          <span className="inline-flex gap-0.5">
+                            <span className="animate-bounce delay-0">.</span>
+                            <span className="animate-bounce delay-100">.</span>
+                            <span className="animate-bounce delay-200">.</span>
+                          </span>
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+            );
+          })}
+          {typingUsers.size > 0 && (
+            <div className="flex items-start gap-2 animate-in fade-in-0 slide-in-from-bottom-2">
+              <div className="flex flex-col max-w-[80%] space-y-0.5">
+                <div className="bg-purple-100 dark:bg-purple-900/30 text-muted-foreground rounded-2xl px-3 py-2 text-sm">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="animate-pulse">
+                      {Array.from(typingUsers).join(", ")} {typingUsers.size === 1 ? "is" : "are"} typing
+                    </span>
+                    <span className="inline-flex gap-0.5">
+                      <span className="animate-bounce delay-0">.</span>
+                      <span className="animate-bounce delay-100">.</span>
+                      <span className="animate-bounce delay-200">.</span>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
       <form
         onSubmit={handleSendMessage}
-        className="p-3 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="border-t p-2 flex items-center gap-1.5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
       >
-        <div className="flex items-center gap-2">
-          <Input
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="Type a message..."
-            className="flex-1 h-9 rounded-full bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 focus:border-purple-500 shadow-sm hover:shadow-md focus:shadow-lg transition-all duration-200"
-          />
-          <Button 
-            type="submit" 
-            size="icon" 
-            className="rounded-full h-9 w-9 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
-            disabled={!newMessage.trim()}
-          >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <Input
+          value={newMessage}
+          onChange={handleTyping}
+          placeholder="Type a message..."
+          className="flex-1 h-8 px-3 text-sm rounded-full bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 dark:focus:ring-purple-400/20"
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!newMessage.trim()}
+          className="rounded-full h-8 w-8 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
       </form>
     </div>
   );
