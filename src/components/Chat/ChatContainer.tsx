@@ -110,23 +110,26 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
     });
 
     socketInstance.on('newMessage', (message: Message) => {
-      // Check if we've already added this message (either via optimistic update or previous receipt)
-      if (!sentMessages.has(message._id)) {
+      // Only add the message if it's from another user
+      if (message.senderId._id !== currentUser?._id && !sentMessages.has(message._id)) {
         setMessages((prev) => [...prev, message]);
         scrollToBottom();
       }
     });
 
     socketInstance.on('userTyping', ({ userId, username, isTyping }) => {
-      setTypingUsers((prev) => {
-        const newSet = new Set(prev);
-        if (isTyping) {
-          newSet.add(username);
-        } else {
-          newSet.delete(username);
-        }
-        return newSet;
-      });
+      // Don't show typing indicator for current user
+      if (userId !== currentUser?._id) {
+        setTypingUsers((prev) => {
+          const newSet = new Set(prev);
+          if (isTyping) {
+            newSet.add(username);
+          } else {
+            newSet.delete(username);
+          }
+          return newSet;
+        });
+      }
     });
 
     setSocket(socketInstance);
@@ -203,11 +206,15 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
+    
     const token = localStorage.getItem('token');
     if (!socket || !newMessage.trim() || !token) return;
 
@@ -228,9 +235,13 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
         isPending: true,
       };
 
+      // Add message immediately to the UI
       setMessages((prev) => [...prev, optimisticMessage]);
       sentMessages.add(tempId);
+      setNewMessage('');
+      setIsTyping(false);
 
+      // Emit the message
       socket.emit('sendMessage', {
         content: newMessage.trim(),
         roomId,
@@ -248,10 +259,10 @@ export function ChatContainer({ roomId, roomType }: ChatContainerProps) {
         sentMessages.add(response.message._id);
       });
 
-      setNewMessage('');
-      setIsTyping(false);
       socket.emit('typing', { roomId, roomType, isTyping: false });
-      scrollToBottom();
+      
+      // Scroll to bottom after sending
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
