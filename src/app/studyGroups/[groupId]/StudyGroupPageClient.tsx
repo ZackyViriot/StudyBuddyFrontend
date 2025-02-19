@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
 
 interface StudyGroupPageClientProps {
   groupId: string;
@@ -427,18 +428,42 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
+      // Validate required fields
+      if (!studyMeeting.subject) throw new Error('Subject is required');
+      if (!studyMeeting.date) throw new Error('Date is required');
+      if (!studyMeeting.startTime) throw new Error('Start time is required');
+      if (!studyMeeting.endTime) throw new Error('End time is required');
+      if (!studyMeeting.location && studyMeeting.meetingType === 'online') throw new Error('Meeting link is required for online meetings');
+      if (!studyMeeting.location && studyMeeting.meetingType === 'in-person') throw new Error('Location is required for in-person meetings');
+
+      // Format the data
+      const meetingData = {
+        ...studyMeeting,
+        // Ensure date is in ISO format
+        date: new Date(studyMeeting.date).toISOString().split('T')[0],
+        // Add any missing required fields
+        groupId: groupId,
+      };
+
+      console.log('Sending meeting data:', meetingData);
+
       const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/meetings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(studyMeeting),
+        body: JSON.stringify(meetingData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add meeting');
+        const errorData = await response.json();
+        console.error('Server error response:', errorData);
+        throw new Error(errorData.message || 'Failed to add meeting');
       }
+
+      const data = await response.json();
+      console.log('Meeting added successfully:', data);
 
       await fetchGroup();
       setIsAddMeetingOpen(false);
@@ -453,6 +478,12 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       });
     } catch (error) {
       console.error('Error adding meeting:', error);
+      // Show error to user
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to add meeting',
+        variant: 'destructive',
+      });
     }
   };
 
