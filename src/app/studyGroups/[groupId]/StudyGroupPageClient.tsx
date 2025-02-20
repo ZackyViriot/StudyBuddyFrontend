@@ -138,7 +138,8 @@ interface MeetingFormData {
   meetingType: string;
   meetingDays: string[];
   meetingLocation: string;
-  meetingTime: string;
+  startTime: string;
+  endTime: string;
 }
 
 interface StudyMeeting {
@@ -150,6 +151,14 @@ interface StudyMeeting {
   location: string;
   meetingType: string;
 }
+
+const formatTime = (time: string) => {
+  if (!time) return '';
+  const [hours, minutes] = time.split(':');
+  const date = new Date();
+  date.setHours(parseInt(hours), parseInt(minutes));
+  return format(date, 'h:mm a'); // This will format time like "9:30 AM"
+};
 
 export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
   const router = useRouter();
@@ -169,7 +178,8 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
     meetingType: 'online',
     meetingDays: [],
     meetingLocation: '',
-    meetingTime: '',
+    startTime: '',
+    endTime: '',
   });
   const [isAddMeetingDateOpen, setIsAddMeetingDateOpen] = useState(false);
   const [isAddMeetingOpen, setIsAddMeetingOpen] = useState(false);
@@ -240,6 +250,19 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
   useEffect(() => {
     fetchGroup();
   }, [groupId, router]);
+
+  useEffect(() => {
+    if (group) {
+      setMeetingFormData({
+        meetingType: group.meetingType || 'online',
+        meetingDays: group.meetingDays || [],
+        meetingLocation: group.meetingLocation || '',
+        startTime: group.startTime || '',
+        endTime: group.endTime || '',
+      });
+      setSelectedMeetingDays(group.meetingDays || []);
+    }
+  }, [group]);
 
   if (isLoading) {
     return (
@@ -353,8 +376,11 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       if (selectedMeetingDays.length === 0) {
         throw new Error('Please select at least one meeting day');
       }
-      if (!meetingFormData.meetingTime) {
-        throw new Error('Please set a meeting time');
+      if (!meetingFormData.startTime) {
+        throw new Error('Please set a start time');
+      }
+      if (!meetingFormData.endTime) {
+        throw new Error('Please set an end time');
       }
       if (!meetingFormData.meetingLocation && meetingFormData.meetingType === 'online') {
         throw new Error('Please provide a meeting link for online meetings');
@@ -367,9 +393,17 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         meetingType: meetingFormData.meetingType,
         meetingDays: selectedMeetingDays,
         meetingLocation: meetingFormData.meetingLocation,
-        meetingTime: meetingFormData.meetingTime,
+        startTime: meetingFormData.startTime,
+        endTime: meetingFormData.endTime,
       };
 
+      console.log('Current meeting details:', {
+        type: group.meetingType,
+        days: group.meetingDays,
+        location: group.meetingLocation,
+        startTime: group.startTime,
+        endTime: group.endTime
+      });
       console.log('Updating meeting schedule with data:', updateData);
 
       const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}`, {
@@ -388,7 +422,12 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       }
 
       const data = await response.json();
-      console.log('Meeting schedule updated successfully:', data);
+      console.log('Meeting schedule updated successfully. Server response:', data);
+
+      // Verify the returned data has the expected fields
+      if (!data.startTime || !data.endTime) {
+        console.warn('Warning: Server response is missing time fields:', data);
+      }
 
       // Show success message
       toast({
@@ -397,7 +436,18 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         variant: 'default',
       });
 
+      // Fetch the updated group data
       await fetchGroup();
+      
+      // Verify the group data after fetching
+      console.log('Group data after update:', {
+        startTime: group.startTime,
+        endTime: group.endTime,
+        meetingDays: group.meetingDays,
+        meetingType: group.meetingType,
+        meetingLocation: group.meetingLocation
+      });
+
       setIsCreateMeetingOpen(false);
     } catch (error) {
       console.error('Error updating meeting schedule:', error);
@@ -410,7 +460,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
   };
 
   const getMeetingEvents = () => {
-    if (!group.meetingDays || !group.meetingTime) return [];
+    if (!group.meetingDays || !group.startTime || !group.endTime) return [];
     
     const events: CalendarEvent[] = [];
     const currentDate = new Date();
@@ -420,20 +470,29 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
     while (currentDate <= endDate) {
       const dayName = format(currentDate, 'EEEE');
       if (group.meetingDays.includes(dayName)) {
-        const [hours, minutes] = group.meetingTime.split(':');
-        const meetingDate = new Date(currentDate);
-        meetingDate.setHours(parseInt(hours), parseInt(minutes), 0);
+        const [startHours, startMinutes] = group.startTime.split(':');
+        const [endHours, endMinutes] = group.endTime.split(':');
+        
+        const startDate = new Date(currentDate);
+        startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0);
+        
+        const endDate = new Date(currentDate);
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0);
         
         events.push({
-          id: `meeting-${meetingDate.toISOString()}`,
+          id: `meeting-${startDate.toISOString()}`,
           title: `${group.meetingType} Meeting`,
-          start: meetingDate,
-          end: new Date(meetingDate.getTime() + 60 * 60 * 1000), // 1 hour duration
+          start: startDate,
+          end: endDate,
           allDay: false,
           resource: {
             type: 'meeting',
             location: group.meetingLocation,
-            meetingType: group.meetingType
+            meetingType: group.meetingType,
+            startTime: group.startTime,
+            endTime: group.endTime,
+            date: startDate,
+            isRegularMeeting: true
           }
         });
       }
@@ -749,12 +808,23 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                             </div>
 
                             <div>
-                              <Label htmlFor="meetingTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Time</Label>
+                              <Label htmlFor="startTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</Label>
                               <Input
-                                id="meetingTime"
+                                id="startTime"
                                 type="time"
-                                value={meetingFormData.meetingTime}
-                                onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingTime: e.target.value })}
+                                value={meetingFormData.startTime}
+                                onChange={(e) => setMeetingFormData({ ...meetingFormData, startTime: e.target.value })}
+                                className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="endTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</Label>
+                              <Input
+                                id="endTime"
+                                type="time"
+                                value={meetingFormData.endTime}
+                                onChange={(e) => setMeetingFormData({ ...meetingFormData, endTime: e.target.value })}
                                 className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
                               />
                             </div>
@@ -837,7 +907,27 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900 dark:text-gray-100">Meeting Time</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{group.meetingTime}</p>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Start:</span> {formatTime(group.startTime)}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">End:</span> {formatTime(group.endTime)}
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Duration: {(() => {
+                                if (!group.startTime || !group.endTime) return 'Not set';
+                                const [startHours, startMinutes] = group.startTime.split(':');
+                                const [endHours, endMinutes] = group.endTime.split(':');
+                                const start = new Date(2000, 0, 1, parseInt(startHours), parseInt(startMinutes));
+                                const end = new Date(2000, 0, 1, parseInt(endHours), parseInt(endMinutes));
+                                const diff = (end.getTime() - start.getTime()) / (1000 * 60); // Duration in minutes
+                                const hours = Math.floor(diff / 60);
+                                const minutes = diff % 60;
+                                return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m` : ''}`;
+                              })()}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1098,22 +1188,16 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</h4>
                   <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {selectedMeeting ? (
-                      selectedMeeting.type === 'study-session' 
-                        ? format(new Date(selectedMeeting.date + 'T' + selectedMeeting.startTime), 'PPP')
-                        : selectedMeeting.start ? format(new Date(selectedMeeting.start), 'PPP') : 'Not specified'
-                    ) : 'Not specified'}
+                    {selectedMeeting?.date ? format(new Date(selectedMeeting.date), 'PPP') : 'Not specified'}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time</h4>
                   <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {selectedMeeting ? (
-                      selectedMeeting.type === 'study-session'
-                        ? `${format(new Date('2000-01-01T' + selectedMeeting.startTime), 'p')} - ${format(new Date('2000-01-01T' + selectedMeeting.endTime), 'p')}`
-                        : selectedMeeting.start && selectedMeeting.end 
-                          ? `${format(new Date(selectedMeeting.start), 'p')} - ${format(new Date(selectedMeeting.end), 'p')}`
-                          : 'Not specified'
+                    {selectedMeeting?.isRegularMeeting ? (
+                      `${formatTime(selectedMeeting.startTime)} - ${formatTime(selectedMeeting.endTime)}`
+                    ) : selectedMeeting?.startTime && selectedMeeting?.endTime ? (
+                      `${format(new Date('2000-01-01T' + selectedMeeting.startTime), 'p')} - ${format(new Date('2000-01-01T' + selectedMeeting.endTime), 'p')}`
                     ) : 'Not specified'}
                   </p>
                 </div>
