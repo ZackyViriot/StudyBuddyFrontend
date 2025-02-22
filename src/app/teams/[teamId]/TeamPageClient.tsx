@@ -683,14 +683,23 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
           <motion.div variants={itemVariants}>
             <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[700px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1">
               <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10">
-                    <Calendar className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10">
+                      <Calendar className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">Team Calendar</CardTitle>
+                      <CardDescription className="text-base">Schedule and deadlines</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-xl font-semibold">Team Calendar</CardTitle>
-                    <CardDescription className="text-base">Schedule and deadlines</CardDescription>
-                  </div>
+                  <Button
+                    onClick={() => setIsAddTaskOpen(true)}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
@@ -915,7 +924,17 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                   
                   {/* Team Tasks Section */}
                   <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300">
-                    <h3 className="text-lg font-semibold mb-2">Team Tasks</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Team Tasks</h3>
+                      <Button
+                        onClick={() => setIsAddTaskOpen(true)}
+                        variant="outline"
+                        className="bg-white dark:bg-gray-800 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Task
+                      </Button>
+                    </div>
                     <TeamTasks tasks={team.tasks} onTaskComplete={handleTaskComplete} />
                   </div>
                 </div>
