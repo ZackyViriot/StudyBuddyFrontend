@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { config } from '@/config';
+import Cookies from 'js-cookie';
 
 interface SignupFormProps {
   onClose: () => void;
@@ -125,13 +126,51 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
               firstname: formData.firstname,
               lastname: formData.lastname,
             };
-            localStorage.setItem('token', loginResponse.data.access_token);
-            localStorage.setItem('user', JSON.stringify(userData));
-            onClose();
-            router.push('/userProfile');
+
+            // Store token in both localStorage and cookie for better mobile support
+            try {
+              localStorage.setItem('token', loginResponse.data.access_token);
+              localStorage.setItem('user', JSON.stringify(userData));
+              
+              // Also set cookies as a fallback
+              Cookies.set('token', loginResponse.data.access_token, { 
+                expires: 7, // 7 days
+                path: '/',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
+              });
+              Cookies.set('user', JSON.stringify(userData), { 
+                expires: 7,
+                path: '/',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
+              });
+
+              // Dispatch auth change event
+              window.dispatchEvent(new Event('authStateChanged'));
+              
+              // Close the form first
+              onClose();
+
+              // Add a small delay before redirecting
+              setTimeout(() => {
+                try {
+                  router.push('/userProfile');
+                } catch (routerError) {
+                  console.error('Router push failed:', routerError);
+                  // Fallback to window.location if router fails
+                  window.location.href = '/userProfile';
+                }
+              }, 100);
+            } catch (storageError) {
+              console.error('Storage error:', storageError);
+              // If localStorage fails, still try to redirect
+              onClose();
+              window.location.href = '/userProfile';
+            }
           }
         }
-      } catch (error: unknown) {
+      } catch (error) {
         const err = error as SignupError;
         console.error('Signup failed:', err);
         console.error('Error details:', {

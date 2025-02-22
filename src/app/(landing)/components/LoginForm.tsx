@@ -54,28 +54,57 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
       });
 
       if (response.data.access_token) {
-        // Store token in both localStorage and cookie
-        localStorage.setItem('token', response.data.access_token);
-        Cookies.set('token', response.data.access_token, { 
-          expires: 7, // 7 days
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax'
-        });
+        try {
+          // Store token in both localStorage and cookie
+          localStorage.setItem('token', response.data.access_token);
+          Cookies.set('token', response.data.access_token, { 
+            expires: 7, // 7 days
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+          });
 
-        if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          if (response.data.user) {
+            const userData = JSON.stringify(response.data.user);
+            localStorage.setItem('user', userData);
+            Cookies.set('user', userData, { 
+              expires: 7,
+              path: '/',
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax'
+            });
+          }
+
+          // Dispatch auth change event
+          window.dispatchEvent(new Event('authStateChanged'));
+          
+          // Close the form first
+          onClose();
+          
+          // Get the callback URL from search params or default to /teams
+          const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+          
+          // Add a small delay before redirecting
+          setTimeout(() => {
+            try {
+              router.push(callbackUrl);
+            } catch (routerError) {
+              console.error('Router push failed:', routerError);
+              // Fallback to window.location if router fails
+              window.location.href = callbackUrl;
+            }
+          }, 100);
+        } catch (storageError) {
+          console.error('Storage error:', storageError);
+          // If localStorage fails, still try to redirect
+          onClose();
+          const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+          window.location.href = callbackUrl;
         }
-        window.dispatchEvent(new Event('authStateChanged'));
-        onClose();
-        
-        // Get the callback URL from search params or default to /teams
-        const callbackUrl = searchParams.get('callbackUrl') || '/teams';
-        router.push(callbackUrl);
       } else {
         throw new Error('No access token received');
       }
-    } catch (error: unknown) {
+    } catch (error) {
       const err = error as LoginError;
       console.error('Login failed:', err);
       
