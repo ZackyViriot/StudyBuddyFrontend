@@ -410,103 +410,61 @@ export function TeamsPageClient() {
             )}
 
             <motion.div 
-              className="grid grid-cols-1 gap-8"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
               variants={containerVariants}
             >
-              {/* Your Teams Section */}
-              <motion.div variants={itemVariants}>
-                <Card className="bg-white dark:bg-gray-800/90 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg">
-                          <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Your Teams</h2>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Manage your team memberships</p>
-                        </div>
-                        <Badge variant="outline" className="ml-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800">
-                          {userTeams.length}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-indigo-600/20 border-t-indigo-600 animate-spin" />
-                        </div>
-                      </div>
-                    ) : userTeams.length === 0 ? (
+              {/* Teams Overview Section */}
+              <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none transition-all duration-300 hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)] hover:-translate-y-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-semibold tracking-tight">Your Teams</h2>
+                    <p className="text-sm text-muted-foreground">Your active teams and roles</p>
+                  </div>
+                  <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {userTeams.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/10 dark:to-purple-900/10 rounded-full w-20 h-20 mx-auto mb-6">
                           <Users className="h-12 w-12 text-indigo-600/60 dark:text-indigo-400/60" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No teams joined yet</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first team to get started</p>
-                        <Button 
-                          variant="default" 
-                          onClick={() => setIsCreateDialogOpen(true)}
-                          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 font-medium px-8"
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No teams yet</h3>
+                        <p className="text-gray-500 dark:text-gray-400">Join a team or create your own!</p>
+                      </div>
+                    ) : (
+                      userTeams.map(team => (
+                        <motion.div
+                          key={team._id}
+                          whileHover={{ scale: 1.02 }}
+                          className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300 cursor-pointer"
+                          onClick={() => router.push(`/teams/${team._id}`)}
                         >
-                          Create your first team
-                        </Button>
-                      </div>
-                    ) : (
-                      <TeamTable
-                        teams={userTeams}
-                        currentUserId={localStorage.getItem('userId') || ''}
-                        onLeave={handleLeaveTeam}
-                        onDelete={handleDeleteTeam}
-                        showJoinButton={false}
-                      />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                                {team.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{team.name}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{team.members.length} members</p>
+                              </div>
+                            </div>
+                            <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                              {team.createdBy._id === localStorage.getItem('userId') ? 'Admin' : 'Member'}
+                            </Badge>
+                          </div>
+                        </motion.div>
+                      ))
                     )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Daily Tasks Section */}
-              <motion.div variants={itemVariants}>
-                <Card className="bg-white dark:bg-gray-800/90 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg">
-                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">Daily Tasks</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Track your daily progress</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-green-600/20 border-t-green-600 animate-spin" />
-                        </div>
-                      </div>
-                    ) : allTasks.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 rounded-full w-20 h-20 mx-auto mb-6">
-                          <CheckCircle2 className="h-12 w-12 text-green-600/60 dark:text-green-400/60" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">All caught up!</h3>
-                        <p className="text-gray-500 dark:text-gray-400">No tasks available for today</p>
-                      </div>
-                    ) : (
-                      <DailyTasks tasks={allTasks} onTaskComplete={handleTaskComplete} />
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Available Teams Section */}
-              <motion.div variants={itemVariants}>
-                <Card className="bg-white dark:bg-gray-800/90 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 p-6">
+              <Card className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
+                <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 p-6">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
                         <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -516,35 +474,66 @@ export function TeamsPageClient() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Discover and join teams</p>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-purple-600/20 border-t-purple-600 animate-spin" />
-                        </div>
-                      </div>
-                    ) : filteredTeams.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10 rounded-full w-20 h-20 mx-auto mb-6">
-                          <Users className="h-12 w-12 text-purple-600/60 dark:text-purple-400/60" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No teams available</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Try creating your own team!</p>
-                      </div>
-                    ) : (
-                      <TeamTable
-                        teams={filteredTeams}
-                        currentUserId={localStorage.getItem('userId') || ''}
-                        onLeave={handleLeaveTeam}
-                        onDelete={handleDeleteTeam}
-                        onJoin={handleJoinTeam}
-                        showJoinButton={true}
+                    <div className="relative w-64">
+                      <Input
+                        type="text"
+                        placeholder="Search teams..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 pr-4 py-2 w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                       />
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full border-2 border-purple-600/20 border-t-purple-600 animate-spin" />
+                      </div>
+                    </div>
+                  ) : filteredTeams.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10 rounded-full w-20 h-20 mx-auto mb-6">
+                        <Users className="h-12 w-12 text-purple-600/60 dark:text-purple-400/60" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No teams available</h3>
+                      <p className="text-gray-500 dark:text-gray-400">Try creating your own team!</p>
+                    </div>
+                  ) : (
+                    <TeamTable
+                      teams={filteredTeams}
+                      currentUserId={localStorage.getItem('userId') || ''}
+                      onLeave={handleLeaveTeam}
+                      onDelete={handleDeleteTeam}
+                      onJoin={handleJoinTeam}
+                      showJoinButton={true}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Daily Tasks Section */}
+            <motion.div variants={itemVariants}>
+              <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none transition-all duration-300 hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-semibold tracking-tight">Daily Tasks</h2>
+                    <p className="text-sm text-muted-foreground">Track your team tasks and progress</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                      <CheckCircle2 className="w-4 h-4 mr-1" />
+                      {allTasks.filter(task => task.status === 'completed').length} Completed
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <DailyTasks tasks={allTasks} onTaskComplete={handleTaskComplete} />
+                </CardContent>
+              </Card>
             </motion.div>
           </motion.div>
         </div>

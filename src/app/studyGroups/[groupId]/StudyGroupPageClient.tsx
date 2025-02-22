@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, Target as Goal, Calendar, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, MessageSquare, ChevronLeft, ChevronRight, CalendarDays, MapPin, Video, Users2, BookOpen } from 'lucide-react';
+import { Users, Target as Goal, Calendar, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, MessageSquare, ChevronLeft, ChevronRight, CalendarDays, MapPin, Video, Users2, BookOpen, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -65,10 +65,13 @@ const itemVariants = {
 };
 
 const cardHoverVariants = {
-  initial: { scale: 1 },
+  initial: { 
+    scale: 1,
+    y: 0
+  },
   hover: {
     scale: 1.02,
-    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+    y: -4,
     transition: {
       type: "spring",
       stiffness: 400,
@@ -193,6 +196,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
     meetingType: 'online'
   });
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   const fetchGroup = async () => {
     try {
@@ -533,16 +537,17 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
       // Format the data
       const meetingData = {
         ...studyMeeting,
-        // Ensure date is in ISO format
         date: new Date(studyMeeting.date).toISOString().split('T')[0],
-        // Add any missing required fields
         groupId: groupId,
       };
 
-      console.log('Sending meeting data:', meetingData);
+      const isEditing = !!editingSessionId;
+      const url = isEditing 
+        ? `${config.API_URL}/api/studyGroups/${groupId}/meetings/${editingSessionId}`
+        : `${config.API_URL}/api/studyGroups/${groupId}/meetings`;
 
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/meetings`, {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -552,15 +557,15 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Server error response:', errorData);
-        throw new Error(errorData.message || 'Failed to add meeting');
+        throw new Error(errorData.message || `Failed to ${isEditing ? 'update' : 'add'} meeting`);
       }
 
       const data = await response.json();
-      console.log('Meeting added successfully:', data);
+      console.log(`Meeting ${isEditing ? 'updated' : 'added'} successfully:`, data);
 
       await fetchGroup();
       setIsAddMeetingOpen(false);
+      setEditingSessionId(null);
       setStudyMeeting({
         subject: '',
         description: '',
@@ -570,12 +575,17 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         location: '',
         meetingType: 'online'
       });
+
+      toast({
+        title: 'Success',
+        description: `Study session ${isEditing ? 'updated' : 'added'} successfully`,
+        variant: 'default',
+      });
     } catch (error) {
-      console.error('Error adding meeting:', error);
-      // Show error to user
+      console.error('Error handling meeting:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to add meeting',
+        description: error instanceof Error ? error.message : 'Failed to handle meeting',
         variant: 'destructive',
       });
     }
@@ -593,7 +603,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         >
           {/* Header Section */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgb(147,51,234,0.1)] dark:hover:shadow-[0_20px_40px_rgb(147,51,234,0.2)] hover:-translate-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-6">
                   <Avatar className="h-20 w-20 border-4 border-white dark:border-gray-700 shadow-2xl">
@@ -623,7 +633,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
           {/* Chat Section */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[calc(100vh-32rem)] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none h-[calc(100vh-32rem)] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_rgb(147,51,234,0.1)] dark:hover:shadow-[0_20px_40px_rgb(147,51,234,0.2)] hover:-translate-y-1">
               <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
@@ -643,7 +653,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
           {/* Calendar Section */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[700px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1">
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none h-[700px] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_rgb(249,115,22,0.1)] dark:hover:shadow-[0_20px_40px_rgb(249,115,22,0.2)] hover:-translate-y-1">
               <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -715,229 +725,132 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
 
           {/* Meeting Section */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                      <CalendarDays className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-semibold">Meeting Schedule</CardTitle>
-                      <CardDescription className="text-base">Group meeting details</CardDescription>
-                    </div>
-                  </div>
-                  <Dialog open={isCreateMeetingOpen} onOpenChange={setIsCreateMeetingOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Update Meeting
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
-                      <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
-                          Update Meeting Schedule
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-6 py-4">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                            <Video className="h-5 w-5" />
-                            <h3 className="font-semibold">Meeting Format</h3>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            {MEETING_TYPES.map((type) => (
-                              <label
-                                key={type.value}
-                                className={`
-                                  relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer
-                                  transition-all duration-200
-                                  ${meetingFormData.meetingType === type.value 
-                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800'
-                                  }
-                                `}
-                              >
-                                <input
-                                  type="radio"
-                                  name="meetingType"
-                                  value={type.value}
-                                  checked={meetingFormData.meetingType === type.value}
-                                  onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingType: e.target.value })}
-                                  className="sr-only"
-                                />
-                                <span className="text-2xl">{type.icon}</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{type.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                            <Calendar className="h-5 w-5" />
-                            <h3 className="font-semibold">Meeting Schedule</h3>
-                          </div>
-                          <div className="space-y-4">
-                            <div>
-                              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Days</Label>
-                              <div className="grid grid-cols-4 gap-2 mt-2">
-                                {DAYS_OF_WEEK.map((day) => (
-                                  <div key={day} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={day}
-                                      checked={selectedMeetingDays.includes(day)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          setSelectedMeetingDays([...selectedMeetingDays, day]);
-                                        } else {
-                                          setSelectedMeetingDays(selectedMeetingDays.filter((d) => d !== day));
-                                        }
-                                      }}
-                                      className="border-gray-300 dark:border-gray-600"
-                                    />
-                                    <Label htmlFor={day} className="text-sm">
-                                      {day.slice(0, 3)}
-                                    </Label>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <Label htmlFor="startTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</Label>
-                              <Input
-                                id="startTime"
-                                type="time"
-                                value={meetingFormData.startTime}
-                                onChange={(e) => setMeetingFormData({ ...meetingFormData, startTime: e.target.value })}
-                                className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="endTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</Label>
-                              <Input
-                                id="endTime"
-                                type="time"
-                                value={meetingFormData.endTime}
-                                onChange={(e) => setMeetingFormData({ ...meetingFormData, endTime: e.target.value })}
-                                className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                            <MapPin className="h-5 w-5" />
-                            <h3 className="font-semibold">Meeting Location</h3>
-                          </div>
-                          <div>
-                            <Label htmlFor="meetingLocation" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {meetingFormData.meetingType === 'online' ? 'Meeting Link' : 'Location'}
-                            </Label>
-                            <Input
-                              id="meetingLocation"
-                              value={meetingFormData.meetingLocation}
-                              onChange={(e) => setMeetingFormData({ ...meetingFormData, meetingLocation: e.target.value })}
-                              placeholder={
-                                meetingFormData.meetingType === 'online'
-                                  ? 'Enter meeting link (e.g., Zoom, Teams)'
-                                  : 'Enter physical location'
-                              }
-                              className="mt-1 w-full border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-4">
-                        <Button
-                          onClick={handleUpdateMeeting}
-                          className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                        >
-                          Update Schedule
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
-                <div className="space-y-6">
+            <Card className="group relative overflow-hidden border border-black/10 dark:border-none bg-gradient-to-br from-white to-gray-50/80 dark:from-gray-800 dark:to-gray-900/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)] transition-all duration-500">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-blue-500/5 dark:from-purple-500/10 dark:via-indigo-500/10 dark:to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-sm" />
+              <CardContent className="p-6 relative z-[1]">
+                <div className="flex flex-col gap-6">
+                  {/* Meeting Type and Location Section */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                          <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Meeting Type</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{group.meetingType}</p>
-                        </div>
+                    <div 
+                      onClick={() => setSelectedMeeting({
+                        type: 'meeting-type',
+                        meetingType: group.meetingType,
+                        description: group.meetingType === 'online' 
+                          ? 'Online meetings are conducted virtually through video conferencing.'
+                          : group.meetingType === 'in-person'
+                          ? 'In-person meetings are conducted face-to-face at a physical location.'
+                          : 'Hybrid meetings offer both online and in-person attendance options.'
+                      })}
+                      className="flex items-start gap-4 bg-white dark:bg-transparent p-4 rounded-xl border border-black/5 dark:border-none hover:border-purple-500/20 dark:hover:bg-purple-500/5 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10 group/item transform hover:-translate-y-1 cursor-pointer"
+                    >
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/20 dark:to-indigo-900/20 border border-black/5 dark:border-none group-hover/item:scale-110 group-hover/item:rotate-6 transition-all duration-500">
+                        <Video className="h-5 w-5 text-purple-600 dark:text-purple-400 group-hover/item:animate-pulse" />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-                          <MapPin className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Location</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{group.meetingLocation}</p>
+                      <div className="flex-1 min-w-0 group-hover/item:translate-x-2 transition-all duration-500">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Meeting Type</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 capitalize group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors duration-300">{group.meetingType}</p>
+                      </div>
+                    </div>
+                    
+                    <div 
+                      onClick={() => setSelectedMeeting({
+                        type: 'location',
+                        meetingType: group.meetingType,
+                        location: group.meetingLocation,
+                        description: group.meetingType === 'online'
+                          ? 'Click to join the online meeting through the provided link.'
+                          : 'Physical meeting location where the group gathers.'
+                      })}
+                      className="flex items-start gap-4 bg-white dark:bg-transparent p-4 rounded-xl border border-black/5 dark:border-none hover:border-blue-500/20 dark:hover:bg-blue-500/5 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 group/item transform hover:-translate-y-1 cursor-pointer"
+                    >
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border border-black/5 dark:border-none group-hover/item:scale-110 group-hover/item:rotate-6 transition-all duration-500">
+                        <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 group-hover/item:animate-pulse" />
+                      </div>
+                      <div className="flex-1 min-w-0 group-hover/item:translate-x-2 transition-all duration-500">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Location</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-all group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors duration-300">{group.meetingLocation}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Days and Time Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-gray-900/50 rounded-xl p-6 border border-black/5 dark:border-none transform hover:scale-[1.02] transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/10">
+                    <div 
+                      onClick={() => setSelectedMeeting({
+                        type: 'meeting-days',
+                        meetingDays: group.meetingDays,
+                        description: 'Regular meeting schedule for the study group.',
+                        isRegularMeeting: true
+                      })}
+                      className="flex items-start gap-4 bg-gray-50/80 dark:bg-gray-800/50 p-4 rounded-xl border border-black/5 dark:border-none group/days hover:bg-white dark:hover:bg-gray-800 transition-all duration-500 hover:shadow-lg hover:shadow-green-500/10 transform hover:-translate-y-1 cursor-pointer"
+                    >
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/20 dark:to-teal-900/20 border border-black/5 dark:border-none group-hover/days:scale-110 group-hover/days:rotate-6 transition-all duration-500">
+                        <Calendar className="h-5 w-5 text-green-600 dark:text-green-400 group-hover/days:animate-pulse" />
+                      </div>
+                      <div className="flex-1 min-w-0 group-hover/days:translate-x-2 transition-all duration-500">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Meeting Days</h3>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {group.meetingDays.map((day: string) => (
+                            <Badge
+                              key={day}
+                              className="bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 text-green-700 dark:text-green-300 border border-green-600/10 dark:border-none hover:scale-110 hover:shadow-md hover:shadow-green-500/10 hover:border-green-500/20 transition-all duration-300 cursor-default"
+                            >
+                              {day}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Meeting Days</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {group.meetingDays.join(', ')}
-                          </p>
-                        </div>
+                    <div 
+                      onClick={() => setSelectedMeeting({
+                        type: 'meeting-time',
+                        startTime: group.startTime,
+                        endTime: group.endTime,
+                        description: 'Regular meeting time slot.',
+                        isRegularMeeting: true
+                      })}
+                      className="flex items-start gap-4 bg-gray-50/80 dark:bg-gray-800/50 p-4 rounded-xl border border-black/5 dark:border-none group/time hover:bg-white dark:hover:bg-gray-800 transition-all duration-500 hover:shadow-lg hover:shadow-orange-500/10 transform hover:-translate-y-1 cursor-pointer"
+                    >
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 border border-black/5 dark:border-none group-hover/time:scale-110 group-hover/time:rotate-6 transition-all duration-500">
+                        <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400 group-hover/time:animate-pulse" />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                          <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Meeting Time</h3>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Start:</span> {formatTime(group.startTime)}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">End:</span> {formatTime(group.endTime)}
-                            </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Duration: {(() => {
-                                if (!group.startTime || !group.endTime) return 'Not set';
-                                const [startHours, startMinutes] = group.startTime.split(':');
-                                const [endHours, endMinutes] = group.endTime.split(':');
-                                const start = new Date(2000, 0, 1, parseInt(startHours), parseInt(startMinutes));
-                                const end = new Date(2000, 0, 1, parseInt(endHours), parseInt(endMinutes));
-                                const diff = (end.getTime() - start.getTime()) / (1000 * 60); // Duration in minutes
-                                const hours = Math.floor(diff / 60);
-                                const minutes = diff % 60;
-                                return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m` : ''}`;
-                              })()}
-                            </p>
+                      <div className="flex-1 min-w-0 group-hover/time:translate-x-2 transition-all duration-500">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Meeting Time</h3>
+                        <div className="space-y-2 mt-2">
+                          <div className="flex items-center gap-2 group/start hover:translate-x-1 transition-transform duration-300">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Start:</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-100 group-hover/time:text-orange-600 dark:group-hover/time:text-orange-400 transition-colors duration-300">{formatTime(group.startTime)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 group/end hover:translate-x-1 transition-transform duration-300">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">End:</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-100 group-hover/time:text-orange-600 dark:group-hover/time:text-orange-400 transition-colors duration-300">{formatTime(group.endTime)}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 group-hover/time:text-orange-500 dark:group-hover/time:text-orange-400 transition-colors duration-300">
+                            Duration: {(() => {
+                              if (!group.startTime || !group.endTime) return 'Not set';
+                              const [startHours, startMinutes] = group.startTime.split(':');
+                              const [endHours, endMinutes] = group.endTime.split(':');
+                              const start = new Date(2000, 0, 1, parseInt(startHours), parseInt(startMinutes));
+                              const end = new Date(2000, 0, 1, parseInt(endHours), parseInt(endMinutes));
+                              const diff = (end.getTime() - start.getTime()) / (1000 * 60);
+                              const hours = Math.floor(diff / 60);
+                              const minutes = diff % 60;
+                              return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m` : ''}`;
+                            })()}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-6">
+
+                  {/* Members Section */}
+                  <div className="bg-white dark:bg-gray-900/50 rounded-xl p-6 border border-black/5 dark:border-none">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-                        <Users2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/20 dark:to-purple-900/20 border border-black/5 dark:border-none">
+                        <Users2 className="h-5 w-5 text-pink-600 dark:text-pink-400" />
                       </div>
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">Attending Members</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Attending Members</h3>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {group.members
@@ -948,18 +861,19 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                           const initials = `${firstName[0]}${lastName[0]}`;
                           
                           return (
-                            <div key={member.userId?._id || Math.random()} className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
+                            <div key={member.userId?._id || Math.random()} 
+                              className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/80 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 border border-black/5 dark:border-none hover:border-purple-500/20 hover:shadow-lg hover:shadow-purple-500/10 group/member">
+                              <Avatar className="h-8 w-8 border-2 border-white dark:border-gray-700 shadow-sm group-hover/member:scale-110 transition-transform duration-300">
                                 <AvatarImage src={member.userId?.profilePicture} />
                                 <AvatarFallback className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
                                   {initials}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <div className="flex flex-col min-w-0 group-hover/member:translate-x-1 transition-transform duration-300">
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                   {`${firstName} ${lastName}`}
                                 </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                                   {member.role || 'Member'}
                                 </span>
                               </div>
@@ -968,6 +882,196 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
                         })}
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Study Sessions Section */}
+          <motion.div variants={itemVariants}>
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_rgb(249,115,22,0.1)] dark:hover:shadow-[0_20px_40px_rgb(249,115,22,0.2)] hover:-translate-y-1">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10">
+                      <BookOpen className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">Study Sessions</CardTitle>
+                      <CardDescription className="text-base">Manage your upcoming study sessions</CardDescription>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditingSessionId(null);
+                      setStudyMeeting({
+                        subject: '',
+                        description: '',
+                        date: '',
+                        startTime: '',
+                        endTime: '',
+                        location: '',
+                        meetingType: 'online'
+                      });
+                      setIsAddMeetingOpen(true);
+                    }}
+                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Session
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-4">
+                  {studySessions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 dark:text-gray-400">No study sessions scheduled</p>
+                      <Button
+                        onClick={() => {
+                          setEditingSessionId(null);
+                          setStudyMeeting({
+                            subject: '',
+                            description: '',
+                            date: '',
+                            startTime: '',
+                            endTime: '',
+                            location: '',
+                            meetingType: 'online'
+                          });
+                          setIsAddMeetingOpen(true);
+                        }}
+                        className="mt-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Schedule a Session
+                      </Button>
+                    </div>
+                  ) : (
+                    studySessions.map((session) => (
+                      <Card
+                        key={session._id}
+                        className="group relative overflow-hidden border border-black/10 dark:border-none bg-gradient-to-br from-white to-gray-50/80 dark:from-gray-800 dark:to-gray-900/50 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgb(249,115,22,0.15)] dark:hover:shadow-[0_20px_40px_rgb(249,115,22,0.25)] transition-all duration-500"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-red-500/5 to-purple-500/5 dark:from-orange-500/10 dark:via-red-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-sm" />
+                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-10">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingSessionId(session._id);
+                              setStudyMeeting({
+                                subject: session.subject,
+                                description: session.description,
+                                date: session.date,
+                                startTime: session.startTime,
+                                endTime: session.endTime,
+                                location: session.location,
+                                meetingType: session.meetingType
+                              });
+                              setIsAddMeetingOpen(true);
+                            }}
+                            className="h-8 w-8 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 shadow-lg backdrop-blur-lg rounded-full hover:scale-110 transition-transform duration-300"
+                          >
+                            <Pencil className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              try {
+                                const token = localStorage.getItem('token');
+                                if (!token) throw new Error('No authentication token found');
+
+                                const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/meetings/${session._id}`, {
+                                  method: 'DELETE',
+                                  headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                  },
+                                });
+
+                                if (!response.ok) {
+                                  const errorData = await response.json();
+                                  throw new Error(errorData.message || 'Failed to delete study session');
+                                }
+
+                                toast({
+                                  title: 'Success',
+                                  description: 'Study session deleted successfully',
+                                  variant: 'default',
+                                });
+
+                                await fetchGroup();
+                              } catch (error) {
+                                console.error('Error deleting study session:', error);
+                                toast({
+                                  title: 'Error',
+                                  description: error instanceof Error ? error.message : 'Failed to delete study session',
+                                  variant: 'destructive',
+                                  duration: 5000,
+                                });
+                              }
+                            }}
+                            className="h-8 w-8 bg-white/80 dark:bg-gray-800/80 hover:bg-red-50 dark:hover:bg-red-900/30 shadow-lg backdrop-blur-lg rounded-full hover:scale-110 hover:rotate-12 transition-all duration-300"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          </Button>
+                        </div>
+                        <CardContent className="p-6 relative z-[1]">
+                          <div className="flex flex-col gap-6">
+                            <div className="flex items-start gap-4 bg-white dark:bg-transparent p-4 rounded-xl border border-black/5 dark:border-none hover:border-orange-500/20 dark:hover:bg-orange-500/5 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 group/item">
+                              <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 border border-black/5 dark:border-none group-hover/item:scale-110 group-hover/item:rotate-3 transition-transform duration-300">
+                                <BookOpen className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                              </div>
+                              <div className="flex-1 min-w-0 group-hover/item:translate-x-1 transition-transform duration-300">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{session.subject}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{session.description}</p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex items-center gap-3 bg-gray-50/80 dark:bg-gray-900/50 p-4 rounded-xl border border-black/5 dark:border-none">
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border border-black/5 dark:border-none">
+                                  <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Date</p>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {format(new Date(session.date), 'PPP')}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 bg-gray-50/80 dark:bg-gray-900/50 p-4 rounded-xl border border-black/5 dark:border-none">
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 border border-black/5 dark:border-none">
+                                  <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Time</p>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {`${format(new Date('2000-01-01T' + session.startTime), 'p')} - ${format(new Date('2000-01-01T' + session.endTime), 'p')}`}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 bg-gray-50/80 dark:bg-gray-900/50 p-4 rounded-xl border border-black/5 dark:border-none">
+                              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-900/20 dark:to-violet-900/20 border border-black/5 dark:border-none">
+                                <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Location</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {session.meetingType === 'online' ? 'Online Meeting' : 'In-Person'}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 break-all">{session.location}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1010,7 +1114,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         <DialogContent className="sm:max-w-[500px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
-              Add Study Session
+              {editingSessionId ? 'Edit Study Session' : 'Add Study Session'}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
@@ -1149,7 +1253,7 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
               onClick={handleAddMeeting}
               className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
             >
-              Add Session
+              {editingSessionId ? 'Update Session' : 'Add Session'}
             </Button>
           </div>
         </DialogContent>
@@ -1160,70 +1264,177 @@ export function StudyGroupPageClient({ groupId }: StudyGroupPageClientProps) {
         <DialogContent className="sm:max-w-[500px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
-              {selectedMeeting?.type === 'meeting' ? 'Regular Meeting' : 'Study Session'}
+              {selectedMeeting?.type === 'meeting-type' ? 'Meeting Type Details' :
+               selectedMeeting?.type === 'location' ? 'Location Details' :
+               selectedMeeting?.type === 'meeting-days' ? 'Meeting Schedule' :
+               selectedMeeting?.type === 'meeting-time' ? 'Meeting Time Details' :
+               selectedMeeting?.type === 'meeting' ? 'Regular Meeting' : 'Study Session'}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
-            {selectedMeeting?.type === 'study-session' && (
+            {selectedMeeting?.type === 'meeting-type' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                  <Video className="h-5 w-5" />
+                  <h3 className="font-semibold">Meeting Format</h3>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 capitalize">{selectedMeeting.meetingType}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{selectedMeeting.description}</p>
+                </div>
+              </div>
+            )}
+
+            {selectedMeeting?.type === 'location' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                  <MapPin className="h-5 w-5" />
+                  <h3 className="font-semibold">{selectedMeeting.meetingType === 'online' ? 'Meeting Link' : 'Location'}</h3>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{selectedMeeting.description}</p>
+                  <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{selectedMeeting.location}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedMeeting?.type === 'meeting-days' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <Calendar className="h-5 w-5" />
+                  <h3 className="font-semibold">Weekly Schedule</h3>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{selectedMeeting.description}</p>
+                  <div className="grid gap-2">
+                    {DAYS_OF_WEEK.map(day => (
+                      <div key={day} className={cn(
+                        "flex items-center p-2 rounded-lg transition-colors duration-300",
+                        selectedMeeting.meetingDays.includes(day)
+                          ? "bg-green-100 dark:bg-green-800/30"
+                          : "bg-gray-50 dark:bg-gray-800/10 opacity-50"
+                      )}>
+                        <div className={cn(
+                          "w-3 h-3 rounded-full mr-3",
+                          selectedMeeting.meetingDays.includes(day)
+                            ? "bg-green-500 dark:bg-green-400"
+                            : "bg-gray-300 dark:bg-gray-600"
+                        )} />
+                        <span className={cn(
+                          "text-sm font-medium",
+                          selectedMeeting.meetingDays.includes(day)
+                            ? "text-green-800 dark:text-green-300"
+                            : "text-gray-500 dark:text-gray-400"
+                        )}>{day}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedMeeting?.type === 'meeting-time' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                  <Clock className="h-5 w-5" />
+                  <h3 className="font-semibold">Time Details</h3>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{selectedMeeting.description}</p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Start Time</span>
+                      <span className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatTime(selectedMeeting.startTime)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">End Time</span>
+                      <span className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatTime(selectedMeeting.endTime)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Duration</span>
+                      <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                        {(() => {
+                          if (!selectedMeeting.startTime || !selectedMeeting.endTime) return 'Not set';
+                          const [startHours, startMinutes] = selectedMeeting.startTime.split(':');
+                          const [endHours, endMinutes] = selectedMeeting.endTime.split(':');
+                          const start = new Date(2000, 0, 1, parseInt(startHours), parseInt(startMinutes));
+                          const end = new Date(2000, 0, 1, parseInt(endHours), parseInt(endMinutes));
+                          const diff = (end.getTime() - start.getTime()) / (1000 * 60);
+                          const hours = Math.floor(diff / 60);
+                          const minutes = diff % 60;
+                          return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m` : ''}`;
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(selectedMeeting?.type === 'meeting' || selectedMeeting?.type === 'study-session') && (
               <>
+                {selectedMeeting?.type === 'study-session' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                      <BookOpen className="h-5 w-5" />
+                      <h3 className="font-semibold">Session Details</h3>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{selectedMeeting?.subject}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedMeeting?.description}</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                    <BookOpen className="h-5 w-5" />
-                    <h3 className="font-semibold">Session Details</h3>
+                    <Calendar className="h-5 w-5" />
+                    <h3 className="font-semibold">Date & Time</h3>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{selectedMeeting?.subject}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedMeeting?.description}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</h4>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {selectedMeeting?.date ? format(new Date(selectedMeeting.date), 'PPP') : 'Not specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time</h4>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {selectedMeeting?.isRegularMeeting ? (
+                          `${formatTime(selectedMeeting.startTime)} - ${formatTime(selectedMeeting.endTime)}`
+                        ) : selectedMeeting?.startTime && selectedMeeting?.endTime ? (
+                          `${format(new Date('2000-01-01T' + selectedMeeting.startTime), 'p')} - ${format(new Date('2000-01-01T' + selectedMeeting.endTime), 'p')}`
+                        ) : 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                    <MapPin className="h-5 w-5" />
+                    <h3 className="font-semibold">Meeting Details</h3>
+                  </div>
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Type</h4>
+                      <p className="text-sm text-gray-900 dark:text-gray-100 capitalize">{selectedMeeting?.meetingType}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {selectedMeeting?.meetingType === 'online' ? 'Meeting Link' : 'Location'}
+                      </h4>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {selectedMeeting?.location || selectedMeeting?.meetingLocation || 'Not specified'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </>
             )}
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                <Calendar className="h-5 w-5" />
-                <h3 className="font-semibold">Date & Time</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</h4>
-                  <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {selectedMeeting?.date ? format(new Date(selectedMeeting.date), 'PPP') : 'Not specified'}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time</h4>
-                  <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {selectedMeeting?.isRegularMeeting ? (
-                      `${formatTime(selectedMeeting.startTime)} - ${formatTime(selectedMeeting.endTime)}`
-                    ) : selectedMeeting?.startTime && selectedMeeting?.endTime ? (
-                      `${format(new Date('2000-01-01T' + selectedMeeting.startTime), 'p')} - ${format(new Date('2000-01-01T' + selectedMeeting.endTime), 'p')}`
-                    ) : 'Not specified'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                <MapPin className="h-5 w-5" />
-                <h3 className="font-semibold">Meeting Details</h3>
-              </div>
-              <div className="grid gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Type</h4>
-                  <p className="text-sm text-gray-900 dark:text-gray-100 capitalize">{selectedMeeting?.meetingType}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {selectedMeeting?.meetingType === 'online' ? 'Meeting Link' : 'Location'}
-                  </h4>
-                  <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {selectedMeeting?.location || selectedMeeting?.meetingLocation || 'Not specified'}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

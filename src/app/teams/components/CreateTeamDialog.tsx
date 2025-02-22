@@ -5,13 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, Target, Calendar, X, Plus } from 'lucide-react';
+import { Users, Target, Calendar, X, Plus, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { config } from '@/config';
 import { Team } from '@/types/team';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Goal {
   title: string;
@@ -286,38 +288,44 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({
                       <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Target Date
                       </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className={cn(
-                              "mt-1 w-full justify-start text-left font-normal",
-                              "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700",
-                              "hover:bg-gray-100 dark:hover:bg-gray-700",
-                              "focus:ring-indigo-500 focus:border-indigo-500",
-                              !goalDates[index] && "text-muted-foreground"
-                            )}
-                          >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            {goalDates[index] ? format(goalDates[index], "PPP") : <span>Select a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={goalDates[index]}
-                            onSelect={(date) => {
-                              if (date) {
-                                setGoalDates(prev => ({ ...prev, [index]: date }));
-                                setValue(`goals.${index}.targetDate` as const, date);
-                              }
-                            }}
-                            initialFocus
-                            className="rounded-md border border-gray-200 dark:border-gray-700"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <div className="relative">
+                        <DatePicker
+                          selected={goalDates[index]}
+                          onChange={(date: Date | null) => {
+                            if (date) {
+                              setGoalDates(prev => ({ ...prev, [index]: date }));
+                              const updatedGoals = [...goals];
+                              updatedGoals[index] = { ...updatedGoals[index], targetDate: date };
+                              setValue('goals', updatedGoals);
+                            }
+                          }}
+                          showTimeSelect
+                          timeFormat="h:mm aa"
+                          timeIntervals={30}
+                          timeCaption="Time"
+                          dateFormat="MMM d, yyyy h:mm aa"
+                          placeholderText="Select date and time"
+                          required
+                          calendarClassName="!bg-white dark:!bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg"
+                          popperClassName="date-picker-popper"
+                          customInput={
+                            <div className="relative w-full">
+                              <Input
+                                value={goalDates[index] ? format(goalDates[index], 'MMM d, yyyy h:mm aa') : ''}
+                                readOnly
+                                placeholder="Select date and time"
+                                className="cursor-pointer bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 pl-10 pr-10 truncate text-gray-900 dark:text-gray-100"
+                              />
+                              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                                <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                              </div>
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                              </div>
+                            </div>
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -339,4 +347,157 @@ export const CreateTeamDialog: React.FC<CreateTeamDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};
+
+<style jsx global>{`
+  .date-picker-popper {
+    z-index: 50;
+  }
+
+  .react-datepicker {
+    font-family: inherit !important;
+    background-color: white !important;
+    border: 1px solid rgb(229 231 235) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    overflow: hidden !important;
+  }
+
+  .dark .react-datepicker {
+    background-color: rgb(17 24 39) !important;
+    border-color: rgb(55 65 81) !important;
+  }
+
+  .react-datepicker__header {
+    background-color: rgb(249 250 251) !important;
+    border-bottom: 1px solid rgb(229 231 235) !important;
+    padding: 1rem !important;
+  }
+
+  .dark .react-datepicker__header {
+    background-color: rgb(17 24 39) !important;
+    border-color: rgb(55 65 81) !important;
+  }
+
+  .react-datepicker__current-month {
+    color: rgb(17 24 39) !important;
+    font-weight: 600 !important;
+  }
+
+  .dark .react-datepicker__current-month {
+    color: rgb(243 244 246) !important;
+  }
+
+  .react-datepicker__day-name {
+    color: rgb(107 114 128) !important;
+    font-weight: 500 !important;
+  }
+
+  .dark .react-datepicker__day-name {
+    color: rgb(156 163 175) !important;
+  }
+
+  .react-datepicker__day {
+    color: rgb(17 24 39) !important;
+    border-radius: 0.375rem !important;
+  }
+
+  .dark .react-datepicker__day {
+    color: rgb(243 244 246) !important;
+  }
+
+  .react-datepicker__day:hover {
+    background-color: rgb(243 244 246) !important;
+  }
+
+  .dark .react-datepicker__day:hover {
+    background-color: rgb(55 65 81) !important;
+  }
+
+  .react-datepicker__day--selected {
+    background: linear-gradient(to right, rgb(99 102 241), rgb(168 85 247)) !important;
+    color: white !important;
+  }
+
+  .react-datepicker__time-container {
+    border-left: 1px solid rgb(229 231 235) !important;
+    width: 150px !important;
+    background-color: white !important;
+  }
+
+  .dark .react-datepicker__time-container {
+    border-color: rgb(55 65 81) !important;
+    background-color: rgb(17 24 39) !important;
+  }
+
+  .react-datepicker__time-box {
+    background-color: white !important;
+  }
+
+  .dark .react-datepicker__time-box {
+    background-color: rgb(17 24 39) !important;
+  }
+
+  .react-datepicker__time-list-item {
+    height: auto !important;
+    padding: 0.5rem !important;
+    color: rgb(17 24 39) !important;
+    background-color: white !important;
+    transition: all 0.2s !important;
+    font-size: 0.875rem !important;
+    text-align: center !important;
+  }
+
+  .dark .react-datepicker__time-list-item {
+    color: rgb(243 244 246) !important;
+    background-color: rgb(17 24 39) !important;
+  }
+
+  .react-datepicker__time-list-item:hover {
+    background-color: rgb(243 244 246) !important;
+    color: rgb(17 24 39) !important;
+  }
+
+  .dark .react-datepicker__time-list-item:hover {
+    background-color: rgb(55 65 81) !important;
+    color: rgb(243 244 246) !important;
+  }
+
+  .react-datepicker__time-list-item--selected {
+    background: linear-gradient(to right, rgb(99 102 241), rgb(168 85 247)) !important;
+    color: white !important;
+    font-weight: 500 !important;
+  }
+
+  .react-datepicker__time-container .react-datepicker__time {
+    background-color: white !important;
+  }
+
+  .dark .react-datepicker__time-container .react-datepicker__time {
+    background-color: rgb(17 24 39) !important;
+  }
+
+  .react-datepicker__header--time {
+    background-color: white !important;
+    border-bottom: 1px solid rgb(229 231 235) !important;
+  }
+
+  .dark .react-datepicker__header--time {
+    background-color: rgb(17 24 39) !important;
+    border-color: rgb(55 65 81) !important;
+  }
+
+  .react-datepicker-time__header {
+    color: rgb(17 24 39) !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+  }
+
+  .dark .react-datepicker-time__header {
+    color: rgb(243 244 246) !important;
+  }
+
+  .react-datepicker__triangle {
+    display: none !important;
+  }
+`}</style> 

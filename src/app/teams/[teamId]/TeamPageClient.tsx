@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Team } from '@/types/team';
+import { Team as TeamType, TeamMember, TeamTask, TeamGoal } from '@/types/team';
 import { User } from '@/types/user';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,9 +28,31 @@ import { config } from '@/config';
 import { TaskDetailsDialog } from '../components/TaskDetailsDialog';
 import { MemberProfileDialog } from '../components/MemberProfileDialog';
 import { ChatContainer } from '@/components/Chat/ChatContainer';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface TeamPageClientProps {
   teamId: string;
+}
+
+interface TeamActivity {
+  _id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay: boolean;
+  resource: any;
+}
+
+interface CalendarEventProps {
+  event: CalendarEvent;
+  title: string;
 }
 
 const containerVariants = {
@@ -84,20 +106,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  allDay: boolean;
-  resource: any;
-}
-
-interface CalendarEventProps {
-  event: CalendarEvent;
-  title: string;
-}
-
 const formatDate = (dateString: string | Date | undefined) => {
   try {
     if (!dateString) {
@@ -116,7 +124,7 @@ const formatDate = (dateString: string | Date | undefined) => {
 
 export function TeamPageClient({ teamId }: TeamPageClientProps) {
   const router = useRouter();
-  const [team, setTeam] = useState<Team | null>(null);
+  const [team, setTeam] = useState<TeamType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -128,6 +136,27 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isMemberProfileOpen, setIsMemberProfileOpen] = useState(false);
+
+  const handleTaskComplete = async (taskId: string) => {
+    if (!team) return;
+    try {
+      await fetch(`/api/teams/${team._id}/tasks/${taskId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      // Refresh team data
+      const updatedTeam = { ...team };
+      const task = updatedTeam.tasks.find((t: TeamTask) => t._id === taskId);
+      if (task) {
+        task.status = 'completed';
+      }
+      setTeam(updatedTeam);
+    } catch (error) {
+      console.error('Error completing task:', error);
+    }
+  };
 
   const fetchTeam = async () => {
     try {
@@ -737,10 +766,10 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                           }}
                           className={`p-1.5 rounded-md text-sm ${
                             getTaskStatus(props.event.resource) === 'completed'
-                              ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                              ? 'bg-green-600 text-white'
                               : getTaskStatus(props.event.resource) === 'in_progress'
-                              ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                              : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-yellow-600 text-white'
                           }`}
                         >
                           <div className="font-medium truncate text-xs">{props.title}</div>
@@ -838,157 +867,104 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
             </Card>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Tasks Section */}
-            <motion.div variants={itemVariants}>
-              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/10 hover:-translate-y-1">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10">
-                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl font-semibold">Tasks</CardTitle>
-                        <CardDescription className="text-base">Track team progress</CardDescription>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => setIsAddTaskOpen(true)}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Task
-                    </Button>
+          {/* Chat Section */}
+          <motion.div variants={itemVariants}>
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none h-[calc(100vh-32rem)] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_rgb(147,51,234,0.1)] dark:hover:shadow-[0_20px_40px_rgb(147,51,234,0.2)] hover:-translate-y-1">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+                    <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                </CardHeader>
-                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
-                  <div className="space-y-4">
-                    {team.tasks
-                      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-                      .map((task) => (
-                        <motion.div
-                          key={task._id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          whileHover={{ scale: 1.02, y: -2 }}
-                          onClick={() => handleTaskClick(task)}
-                          className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className={cn(
-                                "p-3 rounded-xl",
-                                task.status === 'completed' ? "bg-green-100 dark:bg-green-900/20" :
-                                task.status === 'in_progress' ? "bg-blue-100 dark:bg-blue-900/20" :
-                                "bg-yellow-100 dark:bg-yellow-900/20"
-                              )}>
-                                {task.status === 'completed' ? (
-                                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                ) : task.status === 'in_progress' ? (
-                                  <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                ) : (
-                                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                                )}
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{task.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                  Due: {format(new Date(task.dueDate), 'MMM dd, yyyy')}
-                                </p>
-                              </div>
-                            </div>
-                            <Badge
-                              variant="secondary"
-                              className={cn(
-                                "px-4 py-1.5 text-sm font-medium rounded-lg",
-                                task.status === 'completed' ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400" :
-                                task.status === 'in_progress' ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" :
-                                "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
-                              )}
-                            >
-                              {task.status.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                        </motion.div>
-                      ))}
+                  <div>
+                    <CardTitle className="text-xl font-semibold">Team Chat</CardTitle>
+                    <CardDescription className="text-base">Communicate with your team members in real-time</CardDescription>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 h-[calc(100%-4.5rem)]">
+                <ChatContainer key={team?._id} roomId={team?._id || ''} roomType="team" />
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Team Info Section */}
+            <Card className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none transition-all duration-300 hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)] hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold tracking-tight">{team.name}</h2>
+                  <p className="text-sm text-muted-foreground">{team.description}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                    {team.members.length} Members
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Team Goals Section */}
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300">
+                    <h3 className="text-lg font-semibold mb-2">Team Goals</h3>
+                    <TeamGoalsList 
+                      team={team} 
+                      currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} 
+                      onAddGoalClick={() => setIsAddGoalOpen(true)}
+                    />
+                  </div>
+                  
+                  {/* Team Tasks Section */}
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300">
+                    <h3 className="text-lg font-semibold mb-2">Team Tasks</h3>
+                    <TeamTasks tasks={team.tasks} onTaskComplete={handleTaskComplete} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Team Members Section */}
-            <motion.div variants={itemVariants}>
-              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                      <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-semibold">Team Members</CardTitle>
-                      <CardDescription className="text-base">Active contributors</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
-                  <TeamMembersList team={team} currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} />
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Goals Section */}
-            <motion.div variants={itemVariants}>
-              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
-                        <Goal className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl font-semibold">Team Goals</CardTitle>
-                        <CardDescription className="text-base">Track team objectives</CardDescription>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => setIsAddGoalOpen(true)}
-                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6"
+            <Card className="bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none transition-all duration-300 hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)] hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold tracking-tight">Team Members</h2>
+                  <p className="text-sm text-muted-foreground">Manage team membership</p>
+                </div>
+                <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {team?.members.map(member => (
+                    <motion.div
+                      key={member.userId._id}
+                      whileHover={{ scale: 1.02 }}
+                      className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300"
                     >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Goal
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 overflow-y-auto h-[calc(100%-5rem)]">
-                  <TeamGoalsList 
-                    team={team} 
-                    currentUserId={JSON.parse(localStorage.getItem('user') || '{}')._id || ''} 
-                    onAddGoalClick={() => setIsAddGoalOpen(true)}
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Chat Section */}
-            <motion.div variants={itemVariants}>
-              <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[600px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                      <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-semibold">Team Chat</CardTitle>
-                      <CardDescription className="text-base">Communicate with your team members in real-time</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0 h-[calc(100%-5rem)]">
-                  <ChatContainer roomId={team._id} roomType="team" />
-                </CardContent>
-              </Card>
-            </motion.div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={member.userId.profilePicture} />
+                            <AvatarFallback>
+                              {member.userId.firstname && member.userId.lastname 
+                                ? `${member.userId.firstname[0]}${member.userId.lastname[0]}`
+                                : 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                              {member.userId.firstname} {member.userId.lastname}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{member.userId.email}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                          {member.role}
+                        </Badge>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </motion.div>
 
@@ -1036,6 +1012,30 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
     </div>
   );
 }
+
+const TeamTasks: React.FC<{ tasks: TeamTask[]; onTaskComplete: (taskId: string) => void }> = ({ tasks, onTaskComplete }) => {
+  return (
+    <div className="space-y-4">
+      {tasks.map(task => (
+        <div key={task._id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <Checkbox
+              checked={task.status === 'completed'}
+              onCheckedChange={() => task._id && onTaskComplete(task._id)}
+            />
+            <div>
+              <h4 className="font-medium">{task.title}</h4>
+              <p className="text-sm text-gray-500">{task.description}</p>
+            </div>
+          </div>
+          <Badge variant="secondary">
+            {format(new Date(task.dueDate), 'MMM d, yyyy')}
+          </Badge>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 <style jsx global>{`
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -1166,6 +1166,37 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
   .rbc-time-slot {
     background: transparent !important;
+  }
+
+  /* Calendar Event Styles */
+  .rbc-event {
+    background: rgb(147, 51, 234) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 6px -1px rgba(147, 51, 234, 0.1), 0 2px 4px -1px rgba(147, 51, 234, 0.06) !important;
+  }
+
+  .rbc-event.rbc-selected {
+    background: rgb(126, 34, 206) !important;
+  }
+
+  .rbc-event:hover {
+    background: rgb(126, 34, 206) !important;
+  }
+
+  .rbc-event-content {
+    color: white !important;
+    font-weight: 500 !important;
+  }
+
+  .rbc-event-label {
+    color: white !important;
+    font-weight: 500 !important;
   }
 }
 `}</style> 

@@ -15,16 +15,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
-import { format, addDays } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon, Clock, Target, AlertCircle } from 'lucide-react';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AddGoalDialogProps {
   team: Team;
@@ -38,12 +35,14 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
   const [description, setDescription] = React.useState('');
   const [targetDate, setTargetDate] = React.useState<Date | undefined>(undefined);
   const [progress, setProgress] = React.useState(0);
+  const [error, setError] = React.useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (!targetDate) {
-      alert('Please select a target date');
+      setError('Please select a target date');
       return;
     }
 
@@ -74,14 +73,13 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
       }
 
       const updatedTeam = await response.json();
-      // Get the newly created goal (it will be the last one in the array)
       const newGoal = updatedTeam.goals[updatedTeam.goals.length - 1];
       onAddGoal(newGoal);
       onClose();
       resetForm();
     } catch (error) {
       console.error('Error creating goal:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create goal');
+      setError(error instanceof Error ? error.message : 'Failed to create goal');
     }
   };
 
@@ -90,6 +88,7 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
     setDescription('');
     setTargetDate(undefined);
     setProgress(0);
+    setError('');
   };
 
   const getProgressColor = (value: number) => {
@@ -100,7 +99,7 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px] bg-white dark:bg-gray-800/95 dark:backdrop-blur-xl border-gray-200 dark:border-gray-700">
+      <DialogContent className="sm:max-w-[525px] border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg bg-white dark:bg-gray-900">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
@@ -111,38 +110,45 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <motion.div 
-              className="grid gap-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">Goal Title</Label>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+              >
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </motion.div>
+            )}
+
+            <div>
+              <Label htmlFor="title" className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Goal Title
+              </Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter goal title"
-                className="col-span-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                placeholder="Enter an inspiring goal title"
+                className="mt-2 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
                 required
               />
-            </motion.div>
-            <motion.div 
-              className="grid gap-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="description" className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Description
+              </Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter goal description"
-                className="col-span-3 h-24 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                placeholder="Describe what you want to achieve..."
+                className="mt-2 h-32 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 resize-none"
                 required
               />
-            </motion.div>
+            </div>
+
             <motion.div 
               className="grid gap-2"
               initial={{ opacity: 0, y: 20 }}
@@ -161,77 +167,33 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
                   dateFormat="MMM d, yyyy h:mm aa"
                   placeholderText="Select date and time"
                   required
-                  calendarClassName="!bg-white dark:!bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg !p-3"
+                  calendarClassName="!bg-white dark:!bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg"
+                  popperClassName="date-picker-popper"
                   customInput={
                     <div className="relative w-full">
                       <Input
                         value={targetDate ? format(targetDate, 'MMM d, yyyy h:mm aa') : ''}
                         readOnly
                         placeholder="Select date and time"
-                        className="cursor-pointer bg-white dark:bg-gray-800 pl-10 pr-10 truncate placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        className="cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 pl-10 pr-10 truncate text-gray-900 dark:text-gray-100"
                       />
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                        <CalendarIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+                        <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       </div>
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <Clock className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+                        <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       </div>
                     </div>
                   }
-                  renderCustomHeader={({
-                    date,
-                    decreaseMonth,
-                    increaseMonth,
-                    prevMonthButtonDisabled,
-                    nextMonthButtonDisabled
-                  }) => (
-                    <div className="flex items-center justify-between px-1 py-2 mb-2 border-b border-gray-100 dark:border-gray-700">
-                      <button
-                        onClick={decreaseMonth}
-                        disabled={prevMonthButtonDisabled}
-                        type="button"
-                        className={cn(
-                          "p-1.5 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors",
-                          "disabled:opacity-50 disabled:cursor-not-allowed"
-                        )}
-                      >
-                        <ChevronLeft className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </button>
-                      <div className="text-base font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                        {format(date, 'MMMM yyyy')}
-                      </div>
-                      <button
-                        onClick={increaseMonth}
-                        disabled={nextMonthButtonDisabled}
-                        type="button"
-                        className={cn(
-                          "p-1.5 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors",
-                          "disabled:opacity-50 disabled:cursor-not-allowed"
-                        )}
-                      >
-                        <ChevronRight className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </button>
-                    </div>
-                  )}
-                  popperClassName="react-datepicker-popper z-50"
-                  popperPlacement="bottom-start"
-                  className={cn(
-                    "flex h-10 w-full rounded-md border border-input bg-background",
-                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                    "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
-                    "text-sm text-gray-900 dark:text-gray-100"
-                  )}
                 />
               </div>
             </motion.div>
-            <motion.div 
-              className="grid gap-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-            >
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Initial Progress</Label>
-              <div className="space-y-3">
+
+            <div>
+              <Label className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Initial Progress
+              </Label>
+              <div className="mt-6 space-y-4">
                 <Slider
                   value={[progress]}
                   onValueChange={(values: number[]) => setProgress(values[0])}
@@ -243,44 +205,34 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
                     getProgressColor(progress)
                   )}
                 />
-                <motion.div 
-                  className="flex justify-between items-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Progress</span>
-                  <motion.span
-                    key={progress}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className={cn(
-                      "font-medium text-sm",
-                      progress === 100 ? "text-green-500" : "text-gray-700 dark:text-gray-300"
-                    )}
-                  >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Progress</span>
+                  <span className={cn(
+                    "text-sm font-semibold",
+                    progress === 100 ? "text-green-500" : "text-gray-900 dark:text-gray-100"
+                  )}>
                     {progress}%
-                  </motion.span>
-                </motion.div>
+                  </span>
+                </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
-              className="bg-white dark:bg-gray-800 border-gray-200 hover:border-indigo-300 dark:border-gray-700 dark:hover:border-indigo-700"
+          <DialogFooter className="flex gap-3 pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 bg-transparent border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className={cn(
-                "bg-gradient-to-r text-white transition-all duration-300",
+                "flex-1 text-white transition-all duration-300",
                 progress === 100
-                  ? "from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  : "from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                  : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
               )}
             >
               Create Goal
@@ -288,16 +240,159 @@ export function AddGoalDialog({ team, isOpen, onClose, onAddGoal }: AddGoalDialo
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <style jsx global>{`
+        .date-picker-popper {
+          z-index: 50;
+        }
+
+        .react-datepicker {
+          font-family: inherit !important;
+          background-color: white !important;
+          border: 1px solid rgb(229 231 235) !important;
+          border-radius: 0.5rem !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+          overflow: hidden !important;
+        }
+
+        .dark .react-datepicker {
+          background-color: rgb(31 41 55) !important;
+          border-color: rgb(55 65 81) !important;
+        }
+
+        .react-datepicker__header {
+          background-color: rgb(249 250 251) !important;
+          border-bottom: 1px solid rgb(229 231 235) !important;
+          padding: 1rem !important;
+        }
+
+        .dark .react-datepicker__header {
+          background-color: rgb(31 41 55) !important;
+          border-color: rgb(55 65 81) !important;
+        }
+
+        .react-datepicker__current-month {
+          color: rgb(17 24 39) !important;
+          font-weight: 600 !important;
+        }
+
+        .dark .react-datepicker__current-month {
+          color: rgb(243 244 246) !important;
+        }
+
+        .react-datepicker__day-name {
+          color: rgb(107 114 128) !important;
+          font-weight: 500 !important;
+        }
+
+        .dark .react-datepicker__day-name {
+          color: rgb(156 163 175) !important;
+        }
+
+        .react-datepicker__day {
+          color: rgb(17 24 39) !important;
+          border-radius: 0.375rem !important;
+        }
+
+        .dark .react-datepicker__day {
+          color: rgb(243 244 246) !important;
+        }
+
+        .react-datepicker__day:hover {
+          background-color: rgb(243 244 246) !important;
+        }
+
+        .dark .react-datepicker__day:hover {
+          background-color: rgb(55 65 81) !important;
+        }
+
+        .react-datepicker__day--selected {
+          background: linear-gradient(to right, rgb(99 102 241), rgb(168 85 247)) !important;
+          color: white !important;
+        }
+
+        .react-datepicker__time-container {
+          border-left: 1px solid rgb(229 231 235) !important;
+          width: 150px !important;
+          background-color: white !important;
+        }
+
+        .dark .react-datepicker__time-container {
+          border-color: rgb(55 65 81) !important;
+          background-color: rgb(31 41 55) !important;
+        }
+
+        .react-datepicker__time-box {
+          background-color: white !important;
+        }
+
+        .dark .react-datepicker__time-box {
+          background-color: rgb(31 41 55) !important;
+        }
+
+        .react-datepicker__time-list-item {
+          height: auto !important;
+          padding: 0.5rem !important;
+          color: rgb(17 24 39) !important;
+          background-color: white !important;
+          transition: all 0.2s !important;
+          font-size: 0.875rem !important;
+          text-align: center !important;
+        }
+
+        .dark .react-datepicker__time-list-item {
+          color: rgb(243 244 246) !important;
+          background-color: rgb(31 41 55) !important;
+        }
+
+        .react-datepicker__time-list-item:hover {
+          background-color: rgb(243 244 246) !important;
+          color: rgb(17 24 39) !important;
+        }
+
+        .dark .react-datepicker__time-list-item:hover {
+          background-color: rgb(55 65 81) !important;
+          color: rgb(243 244 246) !important;
+        }
+
+        .react-datepicker__time-list-item--selected {
+          background: linear-gradient(to right, rgb(99 102 241), rgb(168 85 247)) !important;
+          color: white !important;
+          font-weight: 500 !important;
+        }
+
+        .react-datepicker__time-container .react-datepicker__time {
+          background-color: white !important;
+        }
+
+        .dark .react-datepicker__time-container .react-datepicker__time {
+          background-color: rgb(31 41 55) !important;
+        }
+
+        .react-datepicker__header--time {
+          background-color: white !important;
+          border-bottom: 1px solid rgb(229 231 235) !important;
+        }
+
+        .dark .react-datepicker__header--time {
+          background-color: rgb(31 41 55) !important;
+          border-color: rgb(55 65 81) !important;
+        }
+
+        .react-datepicker-time__header {
+          color: rgb(17 24 39) !important;
+          font-weight: 600 !important;
+          font-size: 0.875rem !important;
+        }
+
+        .dark .react-datepicker-time__header {
+          color: rgb(243 244 246) !important;
+        }
+
+        .react-datepicker__triangle {
+          display: none !important;
+        }
+      `}</style>
     </Dialog>
   );
-}
-
-<style jsx global>{`
-  .react-datepicker {
-    font-family: inherit !important;
-    border: none !important;
-    background: transparent !important;
-  }
-  
-  /* ... copy all the calendar styles from AddTaskDialog ... */
-`}</style> 
+} 
