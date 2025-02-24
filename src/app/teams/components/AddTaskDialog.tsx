@@ -14,10 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { format, isValid, setHours, setMinutes } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { format, isValid } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, Check } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { config } from '@/config';
 import DatePicker from 'react-datepicker';
@@ -82,7 +80,6 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
       }
 
       const updatedTeam = await response.json();
-      // Get the newly created task (it will be the last one in the array)
       const newTask = updatedTeam.tasks[updatedTeam.tasks.length - 1];
       onAddTask(newTask);
       resetForm();
@@ -111,23 +108,27 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
     );
   };
 
-  const allMembers = [
-    // Add creator
-    { userId: team.createdBy, role: 'admin' },
-    // Add all other members, handling both team and study group structures
-    ...(Array.isArray(team.members) ? team.members.map(member => ({
-      userId: member.userId || member,
-      role: member.role || 'member'
-    })) : [])
-  ]
-    .filter(member => 
-      member.userId && 
-      member.userId._id
-    )
+  // Remove duplicate members by user ID
+  const allMembers = React.useMemo(() => {
+    const seen = new Set();
+    return [
+      { userId: team.createdBy, role: 'admin' },
+      ...(Array.isArray(team.members) ? team.members.map(member => ({
+        userId: member.userId || member,
+        role: member.role || 'member'
+      })) : [])
+    ]
+    .filter(member => {
+      if (!member.userId || !member.userId._id) return false;
+      const duplicate = seen.has(member.userId._id);
+      seen.add(member.userId._id);
+      return !duplicate;
+    });
+  }, [team]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px] bg-white dark:bg-gray-800/95 dark:backdrop-blur-xl border-gray-200 dark:border-gray-700">
+      <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800/95 dark:backdrop-blur-xl border-gray-200 dark:border-gray-700">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
@@ -181,6 +182,7 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
                   placeholderText="Select due date and time"
                   required
                   calendarClassName="!bg-white dark:!bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg !p-3"
+                  popperClassName="!z-[9999]"
                   customInput={
                     <div className="relative w-full">
                       <Input
@@ -197,43 +199,7 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
                       </div>
                     </div>
                   }
-                  renderCustomHeader={({
-                    date,
-                    decreaseMonth,
-                    increaseMonth,
-                    prevMonthButtonDisabled,
-                    nextMonthButtonDisabled,
-                  }) => (
-                    <div className="flex items-center justify-between px-1 py-2 mb-2 border-b border-gray-100 dark:border-gray-700">
-                      <button
-                        onClick={decreaseMonth}
-                        disabled={prevMonthButtonDisabled}
-                        type="button"
-                        className={cn(
-                          "p-1.5 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors",
-                          "disabled:opacity-50 disabled:cursor-not-allowed"
-                        )}
-                      >
-                        <ChevronLeft className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </button>
-                      <div className="text-base font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                        {format(date, 'MMMM yyyy')}
-                      </div>
-                      <button
-                        onClick={increaseMonth}
-                        disabled={nextMonthButtonDisabled}
-                        type="button"
-                        className={cn(
-                          "p-1.5 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors",
-                          "disabled:opacity-50 disabled:cursor-not-allowed"
-                        )}
-                      >
-                        <ChevronRight className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </button>
-                    </div>
-                  )}
-                  popperClassName="react-datepicker-popper z-50"
-                  popperPlacement="bottom-start"
+                  portalId="calendar-root"
                 />
               </div>
             </div>
@@ -291,305 +257,6 @@ export function AddTaskDialog({ team, isOpen, onClose, onAddTask }: AddTaskDialo
           </DialogFooter>
         </form>
       </DialogContent>
-      <style jsx global>{`
-        .react-datepicker {
-          font-family: inherit !important;
-          border: none !important;
-          background: transparent !important;
-        }
-        
-        .react-datepicker__header {
-          background: transparent !important;
-          border-bottom: none !important;
-          padding: 0 !important;
-        }
-        
-        .react-datepicker__month-container {
-          background: transparent !important;
-        }
-        
-        .react-datepicker__day-names {
-          display: flex !important;
-          justify-content: space-between !important;
-          padding: 0 0.5rem !important;
-          margin-bottom: 0.5rem !important;
-          border-bottom: 1px solid #e5e7eb !important;
-        }
-        
-        .dark .react-datepicker__day-names {
-          border-color: rgb(55 65 81) !important;
-        }
-        
-        .react-datepicker__day-name {
-          color: #6b7280 !important;
-          font-weight: 500 !important;
-          width: 2.25rem !important;
-          line-height: 2.25rem !important;
-          margin: 0 !important;
-          font-size: 0.875rem !important;
-        }
-        
-        .react-datepicker__month {
-          margin: 0 !important;
-          padding: 0 0.5rem !important;
-        }
-        
-        .react-datepicker__week {
-          display: flex !important;
-          justify-content: space-between !important;
-        }
-        
-        .react-datepicker__day {
-          width: 2.25rem !important;
-          line-height: 2.25rem !important;
-          margin: 0 !important;
-          border-radius: 0.5rem !important;
-          color: #374151 !important;
-          font-weight: 400 !important;
-          font-size: 0.875rem !important;
-          transition: all 200ms !important;
-        }
-        
-        .dark .react-datepicker__day {
-          color: #e5e7eb !important;
-        }
-        
-        .react-datepicker__day:hover:not(.react-datepicker__day--selected, .react-datepicker__day--disabled) {
-          background: rgba(147, 51, 234, 0.1) !important;
-          color: rgb(147, 51, 234) !important;
-        }
-        
-        .dark .react-datepicker__day:hover:not(.react-datepicker__day--selected, .react-datepicker__day--disabled) {
-          background: rgba(147, 51, 234, 0.2) !important;
-          color: rgb(216, 180, 254) !important;
-        }
-        
-        .react-datepicker__day--selected {
-          background: linear-gradient(to right, rgb(147, 51, 234), rgb(129, 140, 248)) !important;
-          color: white !important;
-          font-weight: 600 !important;
-        }
-        
-        .react-datepicker__day--keyboard-selected {
-          background: rgba(147, 51, 234, 0.1) !important;
-          color: rgb(147, 51, 234) !important;
-          font-weight: 600 !important;
-        }
-        
-        .dark .react-datepicker__day--keyboard-selected {
-          background: rgba(147, 51, 234, 0.2) !important;
-          color: rgb(216, 180, 254) !important;
-        }
-        
-        .react-datepicker__day--today {
-          position: relative !important;
-          font-weight: 600 !important;
-          color: rgb(147, 51, 234) !important;
-        }
-        
-        .dark .react-datepicker__day--today {
-          color: rgb(216, 180, 254) !important;
-        }
-        
-        .react-datepicker__day--outside-month {
-          color: #9ca3af !important;
-          font-weight: 300 !important;
-        }
-        
-        .dark .react-datepicker__day--outside-month {
-          color: #6b7280 !important;
-        }
-        
-        .react-datepicker__time-container {
-          border-left: 1px solid #e5e7eb !important;
-          width: 120px !important;
-          background: transparent !important;
-        }
-        
-        .dark .react-datepicker__time-container {
-          border-color: rgb(55 65 81) !important;
-        }
-        
-        .react-datepicker__time {
-          background: transparent !important;
-        }
-        
-        .react-datepicker__time-box {
-          width: 100% !important;
-          text-align: center !important;
-          border-radius: 0.5rem !important;
-          overflow: hidden !important;
-        }
-        
-        .react-datepicker__header--time {
-          background: transparent !important;
-          border-bottom: 1px solid #e5e7eb !important;
-          padding: 0.5rem !important;
-        }
-        
-        .dark .react-datepicker__header--time {
-          border-color: rgb(55 65 81) !important;
-        }
-        
-        .react-datepicker__time-list {
-          height: 264px !important;
-          overflow-y: auto !important;
-          background: transparent !important;
-          scrollbar-width: thin !important;
-          scrollbar-color: rgba(147, 51, 234, 0.3) transparent !important;
-          padding: 0 !important;
-        }
-        
-        .react-datepicker__time-list::-webkit-scrollbar {
-          width: 4px !important;
-        }
-        
-        .react-datepicker__time-list::-webkit-scrollbar-track {
-          background: transparent !important;
-        }
-        
-        .react-datepicker__time-list::-webkit-scrollbar-thumb {
-          background-color: rgba(147, 51, 234, 0.3) !important;
-          border-radius: 2px !important;
-        }
-        
-        .react-datepicker__time-list-item {
-          padding: 0.5rem 0.75rem !important;
-          height: auto !important;
-          line-height: 1.5 !important;
-          color: #374151 !important;
-          font-size: 0.875rem !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          cursor: pointer !important;
-          transition: all 150ms ease-in-out !important;
-          margin: 2px 4px !important;
-          border-radius: 0.375rem !important;
-          white-space: nowrap !important;
-        }
-        
-        .dark .react-datepicker__time-list-item {
-          color: #e5e7eb !important;
-        }
-        
-        .react-datepicker__time-list-item:hover:not(.react-datepicker__time-list-item--selected) {
-          background: rgba(147, 51, 234, 0.1) !important;
-          color: rgb(147, 51, 234) !important;
-        }
-        
-        .dark .react-datepicker__time-list-item:hover:not(.react-datepicker__time-list-item--selected) {
-          background: rgba(147, 51, 234, 0.2) !important;
-          color: rgb(216, 180, 254) !important;
-        }
-        
-        .react-datepicker__time-list-item--selected {
-          background: linear-gradient(to right, rgb(147, 51, 234), rgb(129, 140, 248)) !important;
-          color: white !important;
-          font-weight: 500 !important;
-          position: relative !important;
-          box-shadow: 0 2px 4px rgba(147, 51, 234, 0.1) !important;
-        }
-        
-        .react-datepicker__time-list-item--selected::after {
-          content: "" !important;
-          position: absolute !important;
-          inset: 0 !important;
-          border-radius: 0.375rem !important;
-          border: 2px solid rgba(147, 51, 234, 0.5) !important;
-          pointer-events: none !important;
-        }
-        
-        .react-datepicker-time__caption {
-          font-weight: 500 !important;
-          color: #6b7280 !important;
-          font-size: 0.875rem !important;
-          margin-bottom: 0.5rem !important;
-          display: block !important;
-          text-align: center !important;
-        }
-        
-        .dark .react-datepicker-time__caption {
-          color: #9ca3af !important;
-        }
-        
-        /* Time Caption Styles */
-        .react-datepicker-time__header {
-          background: transparent !important;
-          color: transparent !important;
-          font-weight: 500 !important;
-          font-size: 0.875rem !important;
-          padding: 0.5rem !important;
-          text-align: center !important;
-          background-image: linear-gradient(to right, rgb(147, 51, 234), rgb(129, 140, 248)) !important;
-          -webkit-background-clip: text !important;
-          background-clip: text !important;
-          margin-bottom: 0.5rem !important;
-        }
-
-        /* Input Field Styles */
-        .react-datepicker__input-container {
-          display: block !important;
-          width: 100% !important;
-        }
-
-        .react-datepicker__input-container input {
-          width: 100% !important;
-          height: 2.5rem !important;
-          padding-left: 2.5rem !important;
-          padding-right: 2.5rem !important;
-          font-size: 0.875rem !important;
-          line-height: 1.25rem !important;
-          border-radius: 0.375rem !important;
-          border: 1px solid #e5e7eb !important;
-          background-color: white !important;
-          color: #374151 !important;
-          cursor: pointer !important;
-        }
-
-        .dark .react-datepicker__input-container input {
-          background-color: rgb(31, 41, 55) !important;
-          border-color: rgb(55, 65, 81) !important;
-          color: #e5e7eb !important;
-        }
-
-        .react-datepicker__input-container input::placeholder {
-          color: #9ca3af !important;
-        }
-
-        .dark .react-datepicker__input-container input::placeholder {
-          color: #6b7280 !important;
-        }
-
-        .react-datepicker__input-container input:focus {
-          outline: none !important;
-          ring: 2px !important;
-          ring-offset: 2px !important;
-          ring-color: rgb(147, 51, 234) !important;
-          border-color: rgb(147, 51, 234) !important;
-        }
-
-        /* Popper Styles */
-        .react-datepicker-popper {
-          z-index: 50 !important;
-        }
-
-        /* Month Header Styles */
-        .react-datepicker__current-month {
-          background: linear-gradient(to right, rgb(147, 51, 234), rgb(129, 140, 248)) !important;
-          -webkit-background-clip: text !important;
-          background-clip: text !important;
-          color: transparent !important;
-          font-weight: 600 !important;
-          font-size: 1rem !important;
-          line-height: 1.5rem !important;
-          margin-bottom: 0.5rem !important;
-        }
-
-        .dark .react-datepicker__current-month {
-          opacity: 0.9 !important;
-        }
-      `}</style>
     </Dialog>
   );
 } 
