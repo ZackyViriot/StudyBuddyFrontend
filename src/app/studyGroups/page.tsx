@@ -187,7 +187,9 @@ export default function StudyGroupsPage() {
       }
 
       setToken(storedToken);
-      localStorage.setItem('userId', payload.sub);
+      // Store the user ID from the token payload
+      const userId = payload.userId || payload.sub;
+      localStorage.setItem('userId', userId);
       fetchData(storedToken);
     } catch (error) {
       console.error('Error validating token:', error);
@@ -272,36 +274,24 @@ export default function StudyGroupsPage() {
     try {
         console.log('Attempting to join group:', groupId);
         
-        // Get token from localStorage
+        // Get token and userId from localStorage
         const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
-
-        // Get userId from token
-        const tokenParts = token.split('.');
-        if (tokenParts.length !== 3) {
-            throw new Error('Invalid token format');
-        }
-        const payload = JSON.parse(atob(tokenParts[1]));
-        const userId = payload.sub;
+        const userId = localStorage.getItem('userId');
         
-        if (!userId) {
-            throw new Error('User ID not found in token');
+        if (!token || !userId) {
+            throw new Error('Authentication information not found');
         }
 
-        // Store userId in localStorage for future use
-        localStorage.setItem('userId', userId);
+        console.log('Joining group with user ID:', userId);
 
-        console.log('Using User ID:', userId);
-
+        // Make the join request with userId from localStorage
         const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/join`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId: userId })  // Send userId as is, without toString()
         });
 
         if (!response.ok) {
@@ -310,22 +300,17 @@ export default function StudyGroupsPage() {
                 status: response.status,
                 statusText: response.statusText,
                 errorData,
-                userId,
-                groupId
+                userId
             });
             
             let errorMessage = 'Failed to join group';
             if (errorData?.message) {
                 errorMessage = errorData.message;
-            } else if (response.status === 400) {
-                errorMessage = 'Invalid request. Please try again.';
             } else if (response.status === 401) {
                 errorMessage = 'Please log in again.';
                 localStorage.removeItem('token');
                 router.push('/');
                 return;
-            } else if (response.status === 404) {
-                errorMessage = 'Study group not found.';
             }
             
             throw new Error(errorMessage);
@@ -340,7 +325,6 @@ export default function StudyGroupsPage() {
     } catch (error) {
         console.error('Error joining study group:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to join group';
-        setError(errorMessage);
         toast({
             title: "Error",
             description: errorMessage,
@@ -355,7 +339,7 @@ export default function StudyGroupsPage() {
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) return null;
       const payload = JSON.parse(atob(tokenParts[1]));
-      return payload.sub || null;
+      return payload.userId || payload.sub || null;
     } catch (error) {
       console.error('Error decoding token:', error);
       return null;
