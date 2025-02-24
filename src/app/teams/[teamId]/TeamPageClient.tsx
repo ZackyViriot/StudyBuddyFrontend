@@ -141,11 +141,102 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const isUserInTeam = team?.members.some(member => member.userId._id === userId);
 
+  const validateTokenAndRedirect = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return false;
+      }
+
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        localStorage.removeItem('token');
+        router.push('/');
+        return false;
+      }
+
+      const payload = JSON.parse(atob(tokenParts[1]));
+      const expirationTime = payload.exp * 1000;
+      
+      if (Date.now() >= expirationTime) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        router.push('/');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating token:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      router.push('/');
+      return false;
+    }
+  };
+
   useEffect(() => {
-    // Access localStorage only after component mount
+    if (!validateTokenAndRedirect()) return;
+    
     const storedUserId = localStorage.getItem('userId');
     setUserId(storedUserId);
+    fetchTeam();
   }, []);
+
+  const fetchTeam = async () => {
+    try {
+      if (!validateTokenAndRedirect()) return;
+
+      const token = localStorage.getItem('token');
+      console.log('Making request with token');
+      
+      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Response not OK:', response.status, errorText);
+        
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          router.push('/');
+          return;
+        }
+        
+        throw new Error(`Failed to fetch team: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Team data received:', data);
+
+      // Check if the user is a member of the team
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const isMember = data.members.some((member: { userId: { _id: string } }) => 
+        member.userId._id === userData._id) || data.createdBy._id === userData._id;
+
+      if (!isMember) {
+        console.log('User is not a member of this team');
+        router.push('/');
+        return;
+      }
+
+      setTeam(data);
+    } catch (error) {
+      console.error('Error fetching team:', error);
+      setTeam(null);
+      router.push('/');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleTaskComplete = async (taskId: string) => {
     if (!team) return;
@@ -167,72 +258,6 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
       console.error('Error completing task:', error);
     }
   };
-
-  const fetchTeam = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('No token available');
-        router.push('/auth/signin?callbackUrl=' + encodeURIComponent(`/teams/${teamId}`));
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('Making request with token');
-      
-      const response = await fetch(`${config.API_URL}/api/teams/${teamId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('Response not OK:', response.status, errorText);
-        if (response.status === 431) {
-          console.error('Request header too large');
-          // Handle token refresh or re-authentication here if needed
-          router.push('/auth/signin');
-          return;
-        }
-        throw new Error(`Failed to fetch team: ${response.status} - ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Team data received:', data);
-
-      // Check if the user is a member of the team
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      const isMember = data.members.some((member: { userId: { _id: string } }) => 
-        member.userId._id === userData._id) || data.createdBy._id === userData._id;
-
-      if (!isMember) {
-        console.log('User is not a member of this team');
-        setTeam(null);
-      } else {
-        setTeam(data);
-      }
-    } catch (error) {
-      console.error('Error fetching team:', error);
-      setTeam(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth/signin?callbackUrl=' + encodeURIComponent(`/teams/${teamId}`));
-      return;
-    }
-    fetchTeam();
-    // Scroll to top when page loads
-    window.scrollTo(0, 0);
-  }, [teamId, router]);
 
   const getTaskStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
