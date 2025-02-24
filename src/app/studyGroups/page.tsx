@@ -476,13 +476,15 @@ export default function StudyGroupsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto dark:bg-gray-800/95 dark:backdrop-blur-xl dark:border-gray-700">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500">
                   Create a New Study Group
                 </DialogTitle>
               </DialogHeader>
-              <CreateStudyGroupForm onSubmit={handleCreateStudyGroup} />
+              <div className="pb-6">
+                <CreateStudyGroupForm onSubmit={handleCreateStudyGroup} />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
