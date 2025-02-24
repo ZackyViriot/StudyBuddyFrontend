@@ -233,6 +233,30 @@ export default function StudyGroupsPage() {
   const handleJoinGroup = async (groupId: string) => {
     try {
       console.log('Attempting to join group:', groupId);
+      
+      // Get user ID from token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Decode token to get user ID
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      const payload = JSON.parse(atob(tokenParts[1]));
+      const userId = payload.sub;
+      
+      if (!userId) {
+        throw new Error('User ID not found in token');
+      }
+
+      // Store userId in localStorage for consistency
+      localStorage.setItem('userId', userId);
+
+      console.log('User ID from token:', userId);
+
       const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/join`, {
         method: 'POST',
         headers: {
@@ -246,7 +270,9 @@ export default function StudyGroupsPage() {
         console.error('Join group error response:', {
           status: response.status,
           statusText: response.statusText,
-          errorData
+          errorData,
+          userId,
+          groupId
         });
         throw new Error(
           errorData?.message || 
@@ -254,7 +280,7 @@ export default function StudyGroupsPage() {
         );
       }
 
-      await fetchData(token!);
+      await fetchData(token);
     } catch (error) {
       console.error('Error joining study group:', error);
       setError(error instanceof Error ? error.message : 'Failed to join group');
