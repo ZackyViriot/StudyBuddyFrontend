@@ -73,6 +73,9 @@ export function Navbar({ onLogin, onSignup }: NavbarProps) {
 
           {isAuthenticated ? (
             <>
+              <Link href="/dashboard">
+                <Button variant="ghost">Dashboard</Button>
+              </Link>
               <Link href="/teams">
                 <Button variant="ghost">Teams</Button>
               </Link>
