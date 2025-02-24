@@ -7,7 +7,7 @@ import { User } from '@/types/user';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Target as Goal, Calendar, Settings, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, Trophy, Rocket, ArrowUpRight, ChevronLeft, ChevronRight, Check, CalendarDays, MessageSquare } from 'lucide-react';
+import { Users, Target as Goal, Calendar, Settings, CheckCircle2, Clock, AlertCircle, Plus, ChartBar, Trophy, Rocket, ArrowUpRight, ChevronLeft, ChevronRight, Check, CalendarDays, MessageSquare, Copy } from 'lucide-react';
 import { TeamMembersList } from '../components/TeamMembersList';
 import { TeamGoalsList } from '../components/TeamGoalsList';
 import { TeamSettings } from '../components/TeamSettings';
@@ -29,6 +29,7 @@ import { TaskDetailsDialog } from '../components/TaskDetailsDialog';
 import { MemberProfileDialog } from '../components/MemberProfileDialog';
 import { ChatContainer } from '@/components/Chat/ChatContainer';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from '@/components/ui/use-toast';
 
 interface TeamPageClientProps {
   teamId: string;
@@ -136,6 +137,15 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isMemberProfileOpen, setIsMemberProfileOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<string>('overview');
+  const [userId, setUserId] = useState<string | null>(null);
+  const isUserInTeam = team?.members.some(member => member.userId._id === userId);
+
+  useEffect(() => {
+    // Access localStorage only after component mount
+    const storedUserId = localStorage.getItem('userId');
+    setUserId(storedUserId);
+  }, []);
 
   const handleTaskComplete = async (taskId: string) => {
     if (!team) return;
@@ -911,6 +921,42 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Join Code Section */}
+                {(isAdmin || isUserInTeam) && team.joinCode && (
+                  <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 rounded-md bg-white/50 dark:bg-gray-800/50">
+                          <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Team Join Code</h3>
+                          <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">Share this code with others to let them join</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <code className="px-3 py-1 rounded-md bg-white/80 dark:bg-gray-800/80 font-mono text-sm text-indigo-600 dark:text-indigo-400">
+                          {team.joinCode}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 hover:bg-white/80 dark:hover:bg-gray-800/80"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(team.joinCode);
+                            toast({
+                              title: "Copied!",
+                              description: "Join code copied to clipboard",
+                              duration: 2000,
+                            });
+                          }}
+                        >
+                          <Copy className="h-4 w-4 text-indigo-600/70 dark:text-indigo-400/70" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-4">
                   {/* Team Goals Section */}
                   <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] hover:shadow-[0_12px_30px_rgb(99,102,241,0.2)] dark:hover:shadow-[0_12px_30px_rgb(99,102,241,0.3)] transition-all duration-300">
