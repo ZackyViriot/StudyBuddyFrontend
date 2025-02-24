@@ -52,6 +52,8 @@ interface FormData {
   meetingDays: string[];
   meetingLocation: string;
   meetingTime: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export default function StudyGroupsPage() {
@@ -203,13 +205,21 @@ export default function StudyGroupsPage() {
         return;
       }
 
+      // Add default start and end times if not provided
+      const enrichedFormData = {
+        ...formData,
+        startTime: formData.startTime || '09:00',
+        endTime: formData.endTime || '17:00',
+        createdBy: userId
+      };
+
       const response = await fetch(`${config.API_URL}/api/studyGroups`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(enrichedFormData)
       });
 
       if (!response.ok) {
@@ -224,71 +234,105 @@ export default function StudyGroupsPage() {
 
       setIsCreateDialogOpen(false);
       await fetchData(token);
+      toast({
+        title: "Success",
+        description: "Study group created successfully!",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Error creating study group:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create study group');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create study group';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
   const handleJoinGroup = async (groupId: string) => {
     try {
-      console.log('Attempting to join group:', groupId);
-      
-      // Get user ID from token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Decode token to get user ID
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(atob(tokenParts[1]));
-      const userId = payload.sub;
-      
-      if (!userId) {
-        throw new Error('User ID not found in token');
-      }
-
-      // Store userId in localStorage for consistency
-      localStorage.setItem('userId', userId);
-
-      console.log('User ID from token:', userId);
-
-      const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/join`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        console.log('Attempting to join group:', groupId);
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
         }
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('Join group error response:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-          userId,
-          groupId
+        // Get userId from localStorage first
+        let userId = localStorage.getItem('userId');
+        
+        // If userId is not in localStorage, try to get it from token
+        if (!userId) {
+            const tokenParts = token.split('.');
+            if (tokenParts.length !== 3) {
+                throw new Error('Invalid token format');
+            }
+            const payload = JSON.parse(atob(tokenParts[1]));
+            userId = payload.sub;
+            
+            if (!userId) {
+                throw new Error('User ID not found in token');
+            }
+
+            // Store userId in localStorage for future use
+            localStorage.setItem('userId', userId);
+        }
+
+        console.log('Using User ID:', userId);
+
+        const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/join`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
-        throw new Error(
-          errorData?.message || 
-          `Failed to join group (${response.status}: ${response.statusText})`
-        );
-      }
 
-      await fetchData(token);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error('Join group error response:', {
+                status: response.status,
+                statusText: response.statusText,
+                errorData,
+                userId,
+                groupId
+            });
+            
+            let errorMessage = 'Failed to join group';
+            if (errorData?.message) {
+                errorMessage = errorData.message;
+            } else if (response.status === 400) {
+                errorMessage = 'Invalid request. Please try again.';
+            } else if (response.status === 401) {
+                errorMessage = 'Please log in again.';
+                localStorage.removeItem('token');
+                router.push('/');
+                return;
+            } else if (response.status === 404) {
+                errorMessage = 'Study group not found.';
+            }
+            
+            throw new Error(errorMessage);
+        }
+
+        await fetchData(token);
+        toast({
+            title: "Success",
+            description: "Successfully joined the study group!",
+            variant: "default",
+        });
     } catch (error) {
-      console.error('Error joining study group:', error);
-      setError(error instanceof Error ? error.message : 'Failed to join group');
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to join group',
-        variant: "destructive",
-      });
+        console.error('Error joining study group:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to join group';
+        setError(errorMessage);
+        toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+        });
     }
   };
 
