@@ -16,6 +16,7 @@ import { Plus, Users, Search } from 'lucide-react';
 import { config } from '@/config';
 import { Navbar } from '@/app/(landing)/components/Navbar';
 import { Card, CardHeader, CardContent } from '@/app/userProfile/components/ui/card';
+import { toast } from '@/components/ui/use-toast';
 
 interface StudyGroup {
   _id: string;
@@ -231,6 +232,7 @@ export default function StudyGroupsPage() {
 
   const handleJoinGroup = async (groupId: string) => {
     try {
+      console.log('Attempting to join group:', groupId);
       const response = await fetch(`${config.API_URL}/api/studyGroups/${groupId}/join`, {
         method: 'POST',
         headers: {
@@ -240,14 +242,27 @@ export default function StudyGroupsPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to join group');
+        const errorData = await response.json().catch(() => null);
+        console.error('Join group error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        throw new Error(
+          errorData?.message || 
+          `Failed to join group (${response.status}: ${response.statusText})`
+        );
       }
 
       await fetchData(token!);
     } catch (error) {
       console.error('Error joining study group:', error);
       setError(error instanceof Error ? error.message : 'Failed to join group');
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to join group',
+        variant: "destructive",
+      });
     }
   };
 
