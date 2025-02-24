@@ -45,7 +45,7 @@ interface StudyGroup {
   };
 }
 
-interface FormData {
+interface StudyGroupFormData {
   name: string;
   description: string;
   meetingType: string;
@@ -54,6 +54,9 @@ interface FormData {
   meetingTime: string;
   startTime?: string;
   endTime?: string;
+  subject?: string;
+  course?: string;
+  institution?: string;
 }
 
 export default function StudyGroupsPage() {
@@ -192,7 +195,7 @@ export default function StudyGroupsPage() {
     }
   }, [router, fetchData]);
 
-  const handleCreateStudyGroup = async (formData: FormData) => {
+  const handleCreateStudyGroup = async (formData: StudyGroupFormData) => {
     try {
       if (!token) {
         setError('You must be logged in to create a study group');
@@ -205,13 +208,19 @@ export default function StudyGroupsPage() {
         return;
       }
 
-      // Add default start and end times if not provided
+      // Prepare the data for submission
       const enrichedFormData = {
         ...formData,
+        createdBy: userId,
+        // Set default values for required fields
         startTime: formData.startTime || '09:00',
         endTime: formData.endTime || '17:00',
-        createdBy: userId
+        meetingDays: formData.meetingDays || ['Monday'],
+        meetingType: formData.meetingType || 'online',
+        meetingLocation: formData.meetingLocation || 'Online'
       };
+
+      console.log('Creating study group with data:', enrichedFormData);
 
       const response = await fetch(`${config.API_URL}/api/studyGroups`, {
         method: 'POST',
@@ -229,6 +238,7 @@ export default function StudyGroupsPage() {
           return;
         }
         const errorData = await response.json();
+        console.error('Study group creation error:', errorData);
         throw new Error(errorData.message || 'Failed to create study group');
       }
 

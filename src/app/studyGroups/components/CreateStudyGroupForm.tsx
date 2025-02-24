@@ -15,6 +15,11 @@ interface FormData {
   meetingDays: string[];
   meetingLocation: string;
   meetingTime: string;
+  startTime?: string;
+  endTime?: string;
+  subject?: string;
+  course?: string;
+  institution?: string;
 }
 
 interface CreateStudyGroupFormProps {
@@ -60,6 +65,8 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
     const formData = {
       ...data,
       meetingDays: selectedDays,
+      startTime: data.startTime || '09:00',
+      endTime: data.endTime || '17:00'
     };
     onSubmit(formData);
   };
@@ -101,6 +108,48 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
           {errors.description && (
             <p className="text-sm text-red-500 mt-1">{errors.description.message as string}</p>
           )}
+        </div>
+
+        {/* Optional Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="subject" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Subject (Optional)
+            </Label>
+            <Input
+              {...register('subject')}
+              type="text"
+              id="subject"
+              placeholder="e.g., Mathematics"
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="course" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Course (Optional)
+            </Label>
+            <Input
+              {...register('course')}
+              type="text"
+              id="course"
+              placeholder="e.g., Calculus 101"
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="institution" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Institution (Optional)
+            </Label>
+            <Input
+              {...register('institution')}
+              type="text"
+              id="institution"
+              placeholder="e.g., University Name"
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
 
@@ -173,19 +222,47 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="meetingTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Meeting Time
-            </Label>
-            <Input
-              {...register('meetingTime', { required: 'Meeting time is required' })}
-              type="time"
-              id="meetingTime"
-              className="w-full"
-            />
-            {errors.meetingTime && (
-              <p className="text-sm text-red-500 mt-1">{errors.meetingTime.message as string}</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="meetingTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Meeting Time
+              </Label>
+              <Input
+                {...register('meetingTime', { required: 'Meeting time is required' })}
+                type="time"
+                id="meetingTime"
+                className="w-full"
+              />
+              {errors.meetingTime && (
+                <p className="text-sm text-red-500 mt-1">{errors.meetingTime.message as string}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="startTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Start Time
+              </Label>
+              <Input
+                {...register('startTime')}
+                type="time"
+                id="startTime"
+                defaultValue="09:00"
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endTime" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                End Time
+              </Label>
+              <Input
+                {...register('endTime')}
+                type="time"
+                id="endTime"
+                defaultValue="17:00"
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </div>
