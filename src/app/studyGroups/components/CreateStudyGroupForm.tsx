@@ -11,12 +11,12 @@ import { Users, Calendar, MapPin } from 'lucide-react';
 interface FormData {
   name: string;
   description: string;
-  meetingType: string;
+  meetingType: 'online' | 'in-person' | 'hybrid';
   meetingDays: string[];
   meetingLocation: string;
   meetingTime: string;
-  startTime?: string;
-  endTime?: string;
+  startTime: string;
+  endTime: string;
   subject?: string;
   course?: string;
   institution?: string;
@@ -34,13 +34,13 @@ const DAYS_OF_WEEK = [
   'Friday',
   'Saturday',
   'Sunday',
-];
+] as const;
 
 const MEETING_TYPES = [
-  { value: 'online', label: 'Online', icon: '🌐' },
-  { value: 'in-person', label: 'In Person', icon: '🏛️' },
-  { value: 'hybrid', label: 'Hybrid', icon: '🔄' },
-];
+  { value: 'online' as const, label: 'Online', icon: '🌐' },
+  { value: 'in-person' as const, label: 'In Person', icon: '🏛️' },
+  { value: 'hybrid' as const, label: 'Hybrid', icon: '🔄' },
+] as const;
 
 export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
   const {
@@ -48,7 +48,13 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    defaultValues: {
+      startTime: '09:00',
+      endTime: '17:00',
+      meetingType: 'online'
+    }
+  });
 
   const meetingType = watch('meetingType');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -64,9 +70,10 @@ export function CreateStudyGroupForm({ onSubmit }: CreateStudyGroupFormProps) {
   const onFormSubmit: SubmitHandler<FormData> = (data) => {
     const formData = {
       ...data,
-      meetingDays: selectedDays,
+      meetingDays: selectedDays.length > 0 ? selectedDays : ['Monday'],
       startTime: data.startTime || '09:00',
-      endTime: data.endTime || '17:00'
+      endTime: data.endTime || '17:00',
+      meetingType: data.meetingType || 'online'
     };
     onSubmit(formData);
   };

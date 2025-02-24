@@ -48,15 +48,16 @@ interface StudyGroup {
 interface StudyGroupFormData {
   name: string;
   description: string;
-  meetingType: string;
+  meetingType: 'online' | 'in-person' | 'hybrid';
   meetingDays: string[];
   meetingLocation: string;
   meetingTime: string;
-  startTime?: string;
-  endTime?: string;
+  startTime: string;
+  endTime: string;
   subject?: string;
   course?: string;
   institution?: string;
+  createdBy?: string;
 }
 
 export default function StudyGroupsPage() {
@@ -212,12 +213,18 @@ export default function StudyGroupsPage() {
       const enrichedFormData = {
         ...formData,
         createdBy: userId,
-        // Set default values for required fields
         startTime: formData.startTime || '09:00',
         endTime: formData.endTime || '17:00',
         meetingDays: formData.meetingDays || ['Monday'],
         meetingType: formData.meetingType || 'online',
-        meetingLocation: formData.meetingLocation || 'Online'
+        meetingLocation: formData.meetingLocation || 'Online',
+        // Ensure all required fields are present
+        name: formData.name,
+        description: formData.description,
+        // Optional fields
+        subject: formData.subject || undefined,
+        course: formData.course || undefined,
+        institution: formData.institution || undefined
       };
 
       console.log('Creating study group with data:', enrichedFormData);
@@ -271,25 +278,20 @@ export default function StudyGroupsPage() {
             throw new Error('No authentication token found');
         }
 
-        // Get userId from localStorage first
-        let userId = localStorage.getItem('userId');
-        
-        // If userId is not in localStorage, try to get it from token
-        if (!userId) {
-            const tokenParts = token.split('.');
-            if (tokenParts.length !== 3) {
-                throw new Error('Invalid token format');
-            }
-            const payload = JSON.parse(atob(tokenParts[1]));
-            userId = payload.sub;
-            
-            if (!userId) {
-                throw new Error('User ID not found in token');
-            }
-
-            // Store userId in localStorage for future use
-            localStorage.setItem('userId', userId);
+        // Get userId from token
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+            throw new Error('Invalid token format');
         }
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const userId = payload.sub;
+        
+        if (!userId) {
+            throw new Error('User ID not found in token');
+        }
+
+        // Store userId in localStorage for future use
+        localStorage.setItem('userId', userId);
 
         console.log('Using User ID:', userId);
 
