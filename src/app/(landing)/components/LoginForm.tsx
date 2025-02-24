@@ -81,8 +81,8 @@ export function LoginForm({ onClose, onSwitchToSignup }: LoginFormProps) {
           // Close the form first
           onClose();
           
-          // Get the callback URL from search params or default to /teams
-          const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+          // Get the callback URL from search params or default to /dashboard
+          const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
           
           // Add a small delay before redirecting
           setTimeout(() => {

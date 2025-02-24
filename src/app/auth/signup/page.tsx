@@ -76,8 +76,8 @@ export default function SignUp() {
       localStorage.setItem('token', loginData.token);
       localStorage.setItem('user', JSON.stringify(loginData.user));
 
-      // Redirect to teams page
-      router.push('/teams');
+      // Redirect to dashboard page
+      router.push('/dashboard');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {

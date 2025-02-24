@@ -155,18 +155,18 @@ export function SignupForm({ onClose, onSwitchToLogin }: SignupFormProps) {
               // Add a small delay before redirecting
               setTimeout(() => {
                 try {
-                  router.push('/userProfile');
+                  router.push('/dashboard');
                 } catch (routerError) {
                   console.error('Router push failed:', routerError);
                   // Fallback to window.location if router fails
-                  window.location.href = '/userProfile';
+                  window.location.href = '/dashboard';
                 }
               }, 100);
             } catch (storageError) {
               console.error('Storage error:', storageError);
               // If localStorage fails, still try to redirect
               onClose();
-              window.location.href = '/userProfile';
+              window.location.href = '/dashboard';
             }
           }
         }

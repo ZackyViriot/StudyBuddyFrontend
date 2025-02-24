@@ -21,7 +21,7 @@ function SignInForm() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push('/teams');
+      router.push('/dashboard');
     }
   }, [router]);
 
@@ -53,8 +53,8 @@ function SignInForm() {
       // Dispatch auth change event
       window.dispatchEvent(new Event('authStateChanged'));
 
-      // Get the callback URL from search params or default to /teams
-      const callbackUrl = searchParams.get('callbackUrl') || '/teams';
+      // Get the callback URL from search params or default to /dashboard
+      const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
       
       // Redirect to the appropriate page
       router.push(callbackUrl);

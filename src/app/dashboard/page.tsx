@@ -136,6 +136,46 @@ interface DashboardLayout extends Layout {
   minH: number;
 }
 
+// Add animation variants at the top of the file after imports
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      when: "beforeChildren",
+      duration: 0.5
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+      duration: 0.5
+    }
+  }
+};
+
+const cardHoverVariants = {
+  initial: { scale: 1 },
+  hover: {
+    scale: 1.02,
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 20
+    }
+  }
+};
+
 const DashboardPage = () => {
   const router = useRouter();
   const [date, setDate] = useState<Date>(new Date());
@@ -160,10 +200,10 @@ const DashboardPage = () => {
   });
   const [windowWidth, setWindowWidth] = useState(1200);
   const [layout, setLayout] = useState<DashboardLayout[]>([
-    { i: 'calendar', x: 0, y: 0, w: 8, h: 4, minW: 6, minH: 3 },
-    { i: 'daily', x: 8, y: 0, w: 4, h: 4, minW: 3, minH: 2 },
-    { i: 'tasks', x: 0, y: 4, w: 6, h: 2, minW: 3, minH: 2 },
-    { i: 'timer', x: 6, y: 4, w: 6, h: 2, minW: 2, minH: 2 }
+    { i: 'calendar', x: 0, y: 0, w: 12, h: 4, minW: 6, minH: 3 }, // Full width on mobile
+    { i: 'daily', x: 0, y: 4, w: 12, h: 3, minW: 3, minH: 2 },    // Full width on mobile
+    { i: 'tasks', x: 0, y: 7, w: 12, h: 3, minW: 3, minH: 2 },    // Full width on mobile
+    { i: 'timer', x: 0, y: 10, w: 12, h: 3, minW: 2, minH: 2 }    // Full width on mobile
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -901,7 +941,7 @@ const DashboardPage = () => {
 
     return (
       <div 
-        className={`${getEventColor()} flex flex-col rounded-md shadow-sm hover:shadow-md transition-all duration-200 w-full h-full`}
+        className={`${getEventColor()} flex flex-col rounded-md shadow-sm hover:shadow-md transition-all duration-200 w-full h-full overflow-hidden`}
         style={{
           minHeight: isMonthView ? '20px' : '24px',
           margin: '1px 0'
@@ -909,7 +949,7 @@ const DashboardPage = () => {
       >
         <div className="flex-1 min-w-0 px-1.5 py-0.5">
           <div className="flex items-center justify-between gap-1">
-            <span className={`font-medium truncate ${isMonthView ? 'text-[11px]' : 'text-sm'}`}>
+            <span className={`font-medium truncate ${isMonthView ? 'text-[10px] sm:text-[11px]' : 'text-sm'}`}>
               {event.title}
             </span>
             {!isMonthView && (
@@ -1201,1062 +1241,1060 @@ const DashboardPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 max-w-[1400px] mx-auto"
+        className="p-2 sm:p-4 md:p-6 max-w-[1400px] mx-auto"
       >
-        <div className="flex items-center justify-between mb-6">
-          <motion.h1 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-3xl font-bold text-gray-900 dark:text-gray-100"
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4 sm:space-y-6 md:space-y-10"
+        >
+          {/* Header Section - More responsive */}
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 sm:mb-6"
           >
-            Your Dashboard
-          </motion.h1>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <Button
-              onClick={() => setIsAddEventOpen(true)}
-              className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Event
-            </Button>
-          </motion.div>
-        </div>
-
-        <div className="grid gap-4">
-          {/* Top Row: Calendar and Daily View */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Calendar Section */}
-            <div className="lg:col-span-9">
-              <Card className="h-[500px] lg:h-[700px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-                      <CalendarIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-semibold">Calendar</CardTitle>
-                      <CardDescription className="text-base">Schedule and deadlines</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 h-[calc(100%-4.5rem)]">
-                  <Calendar
-                    localizer={localizer}
-                    events={calendarEvents}
-                    startAccessor={getEventStart}
-                    endAccessor={getEventEnd}
-                    style={{ height: '100%' }}
-                    eventPropGetter={eventStyleGetter}
-                    onSelectEvent={handleEventSelect}
-                    onSelectSlot={handleSelectSlot}
-                    selectable
-                    components={{
-                      event: CalendarEventComponent
-                    }}
-                    view={view}
-                    onView={setView}
-                    date={date}
-                    onNavigate={date => setDate(date)}
-                    className="calendar-modern"
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Daily View Section */}
-            <div className="lg:col-span-3">
-              <Card className="h-[400px] lg:h-[600px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
-                  <div>
-                    <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">{format(selectedDate, "MMMM d, yyyy")}</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-                      {format(selectedDate, 'PPPP') === format(new Date(), 'PPPP') ? 'Today' : 'Selected day'}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 h-[calc(100%-4rem)]">
-                  <ScrollArea className="h-full">
-                    <div className="space-y-4">
-                      {/* Tasks Section */}
-                      <div>
-                        <h3 className="font-semibold mb-2 text-sm">Tasks</h3>
-                        {tasks
-                          .filter(task => format(new Date(task.dueDate), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd'))
-                          .map((task) => (
-                            <TaskItem key={task.id} task={task} />
-                          ))}
-                      </div>
-
-                      {/* Events Section */}
-                      <div>
-                        <h3 className="font-semibold mb-2 text-sm">Events</h3>
-                        <div className="space-y-2">
-                          {events
-                            .filter(event => 
-                              event.start.getFullYear() === selectedDate.getFullYear() && 
-                              event.start.getMonth() === selectedDate.getMonth() && 
-                              event.start.getDate() === selectedDate.getDate()
-                            )
-                            .sort((a, b) => a.start.getTime() - b.start.getTime())
-                            .map((event) => (
-                              <EventItem key={event.id} event={event} />
-                            ))}
-                        </div>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Bottom Row: Tasks, Timer, and Personal Events */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-            {/* All Tasks Section */}
-            <div className="md:col-span-1 lg:col-span-5">
-              <Card className="h-[400px] lg:h-[450px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
-                  <div>
-                    <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">All Tasks</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">Track your progress</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 h-[calc(100%-4.5rem)] overflow-hidden">
-                  <Tabs defaultValue="all" className="h-full" onValueChange={setSelectedTab}>
-                    <TabsList className="grid grid-cols-3 mb-2">
-                      <TabsTrigger value="all">All</TabsTrigger>
-                      <TabsTrigger value="pending">Pending</TabsTrigger>
-                      <TabsTrigger value="completed">Completed</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value={selectedTab} className="mt-0 h-[calc(100%-3rem)]">
-                      <ScrollArea className="h-full pr-4">
-                        <div className="space-y-2">
-                          {filteredTasks.map((task) => (
-                            <TaskItem key={task.id} task={task} />
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Personal Events Section */}
-            <div className="md:col-span-1 lg:col-span-4">
-              <Card className="h-[400px] lg:h-[450px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
-                  <div>
-                    <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">Personal Events</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">Manage your events</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 h-[calc(100%-4.5rem)] overflow-hidden">
-                  <ScrollArea className="h-full pr-4">
-                    <div className="space-y-2">
-                      {events
-                        .filter(event => event.source === 'personal')
-                        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-                        .map((event) => {
-                          const startDate = new Date(event.startDate);
-                          const isValidDate = !isNaN(startDate.getTime());
-                          
-                          return (
-                            <div
-                              key={event.id}
-                              className={cn(
-                                "p-3 rounded-lg transition-colors cursor-pointer",
-                                event.completed
-                                  ? "bg-gray-100 dark:bg-gray-800/50"
-                                  : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                              )}
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                setIsEventDetailsOpen(true);
-                              }}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <h4 className={cn(
-                                    "text-sm font-medium",
-                                    event.cleared && "text-gray-400 italic"
-                                  )}>{event.title}</h4>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {isValidDate ? format(startDate, 'MMM d, yyyy h:mm a') : 'Invalid date'}
-                                  </p>
-                                  {event.description && (
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                      {event.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {!event.completed && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEventComplete(event);
-                                      }}
-                                      className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                    >
-                                      <CheckCircle2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  {event.cleared ? (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleUnclearEvent(event.id);
-                                      }}
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-blue-500 hover:text-blue-600"
-                                    >
-                                      <CalendarIcon className="h-4 w-4 mr-1" />
-                                      Restore to Calendar
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleClearEvent(event.id);
-                                      }}
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-orange-500 hover:text-orange-600"
-                                    >
-                                      <X className="h-4 w-4 mr-1" />
-                                      Clear
-                                    </Button>
-                                  )}
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteEvent(event.id);
-                                    }}
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-500 hover:text-red-600"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Timer Section */}
-            <div className="md:col-span-2 lg:col-span-3">
-              <Card className="h-[450px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20">
-                      <Clock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
-                        Focus Timer
-                      </CardTitle>
-                      <CardDescription>Manage your work sessions</CardDescription>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsTimerDialogOpen(true)}
-                    className="border-indigo-200 text-indigo-500 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/20"
-                  >
-                    Settings
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-center">
-                    {/* Timer Circle */}
-                    <div className={cn(
-                      "relative w-48 h-48 rounded-full transition-all duration-500",
-                      timerType === 'work'
-                        ? "bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20"
-                        : "bg-gradient-to-br from-blue-500/10 to-violet-500/10 dark:from-blue-500/20 dark:to-violet-500/20",
-                      isRunning && "animate-pulse"
-                    )}>
-                      <div className="absolute inset-0 rounded-full flex items-center justify-center">
-                        <div className="text-center">
-                          <div className={cn(
-                            "text-7xl font-mono font-bold mb-2",
-                            timerType === 'work'
-                              ? "bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500"
-                              : "bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500"
-                          )}>
-                            {formatTime(time)}
-                          </div>
-                          <div className={cn(
-                            "text-sm font-medium",
-                            timerType === 'work'
-                              ? "text-indigo-500 dark:text-indigo-400"
-                              : "text-blue-500 dark:text-blue-400"
-                          )}>
-                            {timerType === 'work' ? 'Focus Time' : cycles < 3 ? 'Short Break' : 'Long Break'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress Indicators */}
-                    <div className="mt-8 w-full max-w-sm">
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge variant={timerType === 'work' ? 'default' : 'secondary'} className={cn(
-                          "bg-gradient-to-r",
-                          timerType === 'work'
-                            ? "from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
-                            : "from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
-                        )}>
-                          {timerType === 'work' ? 'Focus Session' : 'Break Time'}
-                        </Badge>
-                        <Badge variant="outline" className={cn(
-                          "transition-colors",
-                          cycles === 3 && "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                        )}>
-                          Cycle {cycles + 1}/4
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2 mb-6">
-                        {[0, 1, 2, 3].map((cycle) => (
-                          <div
-                            key={cycle}
-                            className={cn(
-                              "h-1.5 rounded-full transition-all duration-500",
-                              cycle < cycles
-                                ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                                : cycle === cycles
-                                  ? timerType === 'work'
-                                    ? "bg-gradient-to-r from-indigo-500 to-purple-500"
-                                    : "bg-gradient-to-r from-blue-500 to-violet-500"
-                                  : "bg-gray-200 dark:bg-gray-700"
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Controls */}
-                    <div className="flex gap-3 mt-4">
-                      <Button
-                        size="lg"
-                        onClick={() => setIsRunning(!isRunning)}
-                        className={cn(
-                          "transition-all duration-300 min-w-[120px] bg-gradient-to-r shadow-lg",
-                          timerType === 'work'
-                            ? "from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-indigo-500/20"
-                            : "from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 shadow-blue-500/20"
-                        )}
-                      >
-                        {isRunning ? 'Pause' : 'Start'}
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        onClick={handleTimerReset}
-                        className={cn(
-                          "transition-colors min-w-[120px]",
-                          timerType === 'work'
-                            ? "border-indigo-200 text-indigo-500 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/20"
-                            : "border-blue-200 text-blue-500 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950/20"
-                        )}
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Timer Settings Dialog */}
-              <Dialog open={isTimerDialogOpen} onOpenChange={setIsTimerDialogOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-200 dark:border-gray-800">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
-                      Timer Settings
-                    </DialogTitle>
-                    <DialogDescription className="text-center text-gray-500 dark:text-gray-400">
-                      Customize your focus and break durations
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="workDuration" className="text-gray-700 dark:text-gray-300">Focus Duration (minutes)</Label>
-                      <Input
-                        id="workDuration"
-                        type="number"
-                        min="1"
-                        max="60"
-                        value={timerMinutes}
-                        onChange={(e) => setTimerMinutes(e.target.value)}
-                        className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="shortBreak" className="text-gray-700 dark:text-gray-300">Short Break (minutes)</Label>
-                      <Input
-                        id="shortBreak"
-                        type="number"
-                        value={shortBreakMinutes}
-                        onChange={(e) => setShortBreakMinutes(e.target.value)}
-                        min="1"
-                        max="30"
-                        className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="longBreak" className="text-gray-700 dark:text-gray-300">Long Break (minutes)</Label>
-                      <Input
-                        id="longBreak"
-                        type="number"
-                        value={longBreakMinutes}
-                        onChange={(e) => setLongBreakMinutes(e.target.value)}
-                        min="5"
-                        max="60"
-                        className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          id="autoStart"
-                          checked={autoStartBreaks}
-                          onChange={(e) => setAutoStartBreaks(e.target.checked)}
-                          className="peer h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-500 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
-                      <Label 
-                        htmlFor="autoStart" 
-                        className="text-sm text-gray-700 dark:text-gray-300"
-                      >
-                        Auto-start next session
-                      </Label>
-                    </div>
-                  </div>
-                  <DialogFooter className="sm:justify-center">
-                    <div className="flex gap-3 w-full">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsTimerDialogOpen(false)}
-                        className="flex-1 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          if (timerType === 'work') {
-                            setTime(parseInt(timerMinutes) * 60);
-                          } else {
-                            setTime(cycles < 3 ? parseInt(shortBreakMinutes) * 60 : parseInt(longBreakMinutes) * 60);
-                          }
-                          setIsTimerDialogOpen(false);
-                        }}
-                        className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
-                      >
-                        Apply Settings
-                      </Button>
-                    </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              {/* Next Session Indicator */}
-              <div className={cn(
-                "absolute top-4 right-4 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300",
-                timerType === 'work'
-                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400"
-                  : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-              )}>
-                Next: {timerType === 'work' 
-                  ? cycles < 3 
-                    ? `${shortBreakMinutes}m break` 
-                    : `${longBreakMinutes}m break`
-                  : `${timerMinutes}m focus`
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Add Event Dialog */}
-        <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-          <DialogContent className="w-[95vw] max-w-[525px] bg-white dark:bg-gray-900">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
-                Add New Event
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Event Title</Label>
-                <Input
-                  id="title"
-                  value={newEvent.title}
-                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  placeholder="Enter event title"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                  placeholder="Enter event description"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Start Date & Time</Label>
-                <div className="relative">
-                  <DatePicker
-                    selected={newEvent.startDate ? new Date(newEvent.startDate) : null}
-                    onChange={(date: Date | null) => date && setNewEvent({
-                      ...newEvent,
-                      startDate: date.toISOString(),
-                      // If end date is not set or is before start date, set it to 1 hour after start
-                      endDate: !newEvent.endDate || new Date(newEvent.endDate) <= date
-                        ? new Date(date.getTime() + 60 * 60 * 1000).toISOString()
-                        : newEvent.endDate
-                    })}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    timeIntervals={15}
-                    timeCaption="Time"
-                    dateFormat="MMMM d, yyyy h:mm aa"
-                    customInput={
-                      <div className="relative w-full">
-                        <Input
-                          value={newEvent.startDate ? format(new Date(newEvent.startDate), 'MMM d, yyyy h:mm aa') : ''}
-                          readOnly
-                          className="cursor-pointer pl-10"
-                        />
-                        <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                      </div>
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>End Date & Time</Label>
-                <div className="relative">
-                  <DatePicker
-                    selected={newEvent.endDate ? new Date(newEvent.endDate) : null}
-                    onChange={(date: Date | null) => date && setNewEvent({
-                      ...newEvent,
-                      endDate: date.toISOString()
-                    })}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    timeIntervals={15}
-                    timeCaption="Time"
-                    dateFormat="MMMM d, yyyy h:mm aa"
-                    minDate={newEvent.startDate ? new Date(newEvent.startDate) : undefined}
-                    customInput={
-                      <div className="relative w-full">
-                        <Input
-                          value={newEvent.endDate ? format(new Date(newEvent.endDate), 'MMM d, yyyy h:mm aa') : ''}
-                          readOnly
-                          className="cursor-pointer pl-10"
-                        />
-                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                      </div>
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Event Type</Label>
-                <select
-                  value={newEvent.type}
-                  onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as typeof newEvent.type })}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800"
-                >
-                  <option value="homework">Homework</option>
-                  <option value="study">Study Session</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              
-              {newEvent.type === 'other' && (
-                <div className="grid gap-2">
-                  <Label htmlFor="customType">Custom Event Type</Label>
-                  <Input
-                    id="customType"
-                    value={newEvent.customType || ''}
-                    onChange={(e) => setNewEvent({ ...newEvent, customType: e.target.value })}
-                    placeholder="Enter custom event type"
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-4">
-              <Button variant="outline" onClick={() => setIsAddEventOpen(false)}>
-                Cancel
-              </Button>
+              Your Dashboard
+            </motion.h1>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
               <Button
-                onClick={() => handleAddEvent(newEvent)}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+                onClick={() => setIsAddEventOpen(true)}
+                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
               >
+                <Plus className="w-4 h-4 mr-2" />
                 Add Event
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </motion.div>
+          </motion.div>
 
-        {/* Event Details Dialog */}
-        <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
-          <DialogContent className="w-[95vw] max-w-[525px] bg-white dark:bg-gray-900">
-            <DialogHeader className="pb-4">
-              <DialogTitle className="text-xl font-bold flex items-center gap-3">
-                {selectedEvent?.title.replace(/[📋👥📚📝🎯]/g, '').trim()}
-              </DialogTitle>
-              {selectedEvent?.sourceName && (
-                <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
-                  {selectedEvent.sourceName}
-                </DialogDescription>
-              )}
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-900/20">
-                      <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="grid gap-4">
+            {/* Top Row: Calendar and Daily View - Responsive grid */}
+            <motion.div 
+              variants={itemVariants}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-4"
+            >
+              {/* Calendar Section - Full width on mobile */}
+              <motion.div 
+                variants={cardHoverVariants}
+                whileHover="hover"
+                className="lg:col-span-9"
+              >
+                <Card className="h-[450px] sm:h-[500px] lg:h-[700px] bg-white dark:bg-gray-900">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+                        <CalendarIcon className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base sm:text-xl font-semibold">Calendar</CardTitle>
+                        <CardDescription className="text-sm sm:text-base">Schedule and deadlines</CardDescription>
+                      </div>
                     </div>
+                  </CardHeader>
+                  <CardContent className="p-2 sm:p-4 h-[calc(100%-4.5rem)]">
+                    <Calendar
+                      localizer={localizer}
+                      events={calendarEvents}
+                      startAccessor={getEventStart}
+                      endAccessor={getEventEnd}
+                      style={{ height: '100%' }}
+                      eventPropGetter={eventStyleGetter}
+                      onSelectEvent={handleEventSelect}
+                      onSelectSlot={handleSelectSlot}
+                      selectable
+                      components={{
+                        event: CalendarEventComponent
+                      }}
+                      view={view}
+                      onView={setView}
+                      date={date}
+                      onNavigate={date => setDate(date)}
+                      className="calendar-modern"
+                      views={['month', 'week', 'day']}
+                      defaultView="month"
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Daily View Section - Full width on mobile */}
+              <motion.div 
+                variants={cardHoverVariants}
+                whileHover="hover"
+                className="lg:col-span-3"
+              >
+                <Card className="h-[400px] lg:h-[700px] bg-white dark:bg-gray-900">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
                     <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Start</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedEvent && selectedEvent.start && !isNaN(selectedEvent.start.getTime())
-                          ? format(selectedEvent.start, 'PPp')
-                          : 'Invalid date'}
-                      </p>
+                      <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">{format(selectedDate, "MMMM d, yyyy")}</CardTitle>
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                        {format(selectedDate, 'PPPP') === format(new Date(), 'PPPP') ? 'Today' : 'Selected day'}
+                      </CardDescription>
                     </div>
-                  </div>
+                  </CardHeader>
+                  <CardContent className="p-4 h-[calc(100%-4rem)]">
+                    <ScrollArea className="h-full">
+                      <div className="space-y-4">
+                        {/* Tasks Section */}
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">Tasks</h3>
+                          {tasks
+                            .filter(task => format(new Date(task.dueDate), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd'))
+                            .map((task) => (
+                              <TaskItem key={task.id} task={task} />
+                            ))}
+                        </div>
+
+                        {/* Events Section */}
+                        <div>
+                          <h3 className="font-semibold mb-2 text-sm">Events</h3>
+                          <div className="space-y-2">
+                            {events
+                              .filter(event => 
+                                event.start.getFullYear() === selectedDate.getFullYear() && 
+                                event.start.getMonth() === selectedDate.getMonth() && 
+                                event.start.getDate() === selectedDate.getDate()
+                              )
+                              .sort((a, b) => a.start.getTime() - b.start.getTime())
+                              .map((event) => (
+                                <EventItem key={event.id} event={event} />
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+
+            {/* Bottom Row: Tasks, Timer, and Personal Events - Responsive grid */}
+            <motion.div 
+              variants={itemVariants}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4"
+            >
+              {/* Tasks Section - Full width on mobile */}
+              <motion.div 
+                variants={cardHoverVariants}
+                whileHover="hover"
+                className="md:col-span-1 lg:col-span-5"
+              >
+                <Card className="h-[400px] lg:h-[450px] bg-white dark:bg-gray-900">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
+                    <div>
+                      <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">All Tasks</CardTitle>
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400">Track your progress</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 h-[calc(100%-4.5rem)] overflow-hidden">
+                    <Tabs defaultValue="all" className="h-full" onValueChange={setSelectedTab}>
+                      <TabsList className="grid grid-cols-3 mb-2">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="pending">Pending</TabsTrigger>
+                        <TabsTrigger value="completed">Completed</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value={selectedTab} className="mt-0 h-[calc(100%-3rem)]">
+                        <ScrollArea className="h-full pr-4">
+                          <div className="space-y-2">
+                            {filteredTasks.map((task) => (
+                              <TaskItem key={task.id} task={task} />
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Personal Events Section - Full width on mobile */}
+              <motion.div 
+                variants={cardHoverVariants}
+                whileHover="hover"
+                className="md:col-span-1 lg:col-span-4"
+              >
+                <Card className="h-[400px] lg:h-[450px] bg-white dark:bg-gray-900">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-gray-100 dark:border-gray-800">
+                    <div>
+                      <CardTitle className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">Personal Events</CardTitle>
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400">Manage your events</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 h-[calc(100%-4.5rem)] overflow-hidden">
+                    <ScrollArea className="h-full pr-4">
+                      <div className="space-y-2">
+                        {events
+                          .filter(event => event.source === 'personal')
+                          .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                          .map((event) => {
+                            const startDate = new Date(event.startDate);
+                            const isValidDate = !isNaN(startDate.getTime());
+                            
+                            return (
+                              <div
+                                key={event.id}
+                                className={cn(
+                                  "p-3 rounded-lg transition-colors cursor-pointer",
+                                  event.completed
+                                    ? "bg-gray-100 dark:bg-gray-800/50"
+                                    : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                )}
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setIsEventDetailsOpen(true);
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className={cn(
+                                      "text-sm font-medium",
+                                      event.cleared && "text-gray-400 italic"
+                                    )}>{event.title}</h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {isValidDate ? format(startDate, 'MMM d, yyyy h:mm a') : 'Invalid date'}
+                                    </p>
+                                    {event.description && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                        {event.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {!event.completed && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEventComplete(event);
+                                        }}
+                                        className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                      >
+                                        <CheckCircle2 className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    {event.cleared ? (
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleUnclearEvent(event.id);
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-blue-500 hover:text-blue-600"
+                                      >
+                                        <CalendarIcon className="h-4 w-4 mr-1" />
+                                        Restore to Calendar
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleClearEvent(event.id);
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-orange-500 hover:text-orange-600"
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        Clear
+                                      </Button>
+                                    )}
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteEvent(event.id);
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Timer Section - Full width on mobile */}
+              <motion.div 
+                variants={cardHoverVariants}
+                whileHover="hover"
+                className="md:col-span-2 lg:col-span-3"
+              >
+                <Card className="h-[450px] bg-white dark:bg-gray-900">
+                  {/* Update Timer content for better mobile display */}
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20">
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base sm:text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                          Focus Timer
+                        </CardTitle>
+                        <CardDescription className="text-sm">Manage your work sessions</CardDescription>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsTimerDialogOpen(true)}
+                      className="border-indigo-200 text-indigo-500 hover:bg-indigo-50"
+                    >
+                      Settings
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col items-center">
+                      {/* Timer Circle */}
+                      <div className={cn(
+                        "relative w-48 h-48 rounded-full transition-all duration-500",
+                        timerType === 'work'
+                          ? "bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20"
+                          : "bg-gradient-to-br from-blue-500/10 to-violet-500/10 dark:from-blue-500/20 dark:to-violet-500/20",
+                        isRunning && "animate-pulse"
+                      )}>
+                        <div className="absolute inset-0 rounded-full flex items-center justify-center">
+                          <div className="text-center">
+                            <div className={cn(
+                              "text-7xl font-mono font-bold mb-2",
+                              timerType === 'work'
+                                ? "bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500"
+                                : "bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500"
+                            )}>
+                              {formatTime(time)}
+                            </div>
+                            <div className={cn(
+                              "text-sm font-medium",
+                              timerType === 'work'
+                                ? "text-indigo-500 dark:text-indigo-400"
+                                : "text-blue-500 dark:text-blue-400"
+                            )}>
+                              {timerType === 'work' ? 'Focus Time' : cycles < 3 ? 'Short Break' : 'Long Break'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress Indicators */}
+                      <div className="mt-8 w-full max-w-sm">
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge variant={timerType === 'work' ? 'default' : 'secondary'} className={cn(
+                            "bg-gradient-to-r",
+                            timerType === 'work'
+                              ? "from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
+                              : "from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+                          )}>
+                            {timerType === 'work' ? 'Focus Session' : 'Break Time'}
+                          </Badge>
+                          <Badge variant="outline" className={cn(
+                            "transition-colors",
+                            cycles === 3 && "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                          )}>
+                            Cycle {cycles + 1}/4
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 mb-6">
+                          {[0, 1, 2, 3].map((cycle) => (
+                            <div
+                              key={cycle}
+                              className={cn(
+                                "h-1.5 rounded-full transition-all duration-500",
+                                cycle < cycles
+                                  ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                                  : cycle === cycles
+                                    ? timerType === 'work'
+                                      ? "bg-gradient-to-r from-indigo-500 to-purple-500"
+                                      : "bg-gradient-to-r from-blue-500 to-violet-500"
+                                    : "bg-gray-200 dark:bg-gray-700"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex gap-3 mt-4">
+                        <Button
+                          size="lg"
+                          onClick={() => setIsRunning(!isRunning)}
+                          className={cn(
+                            "transition-all duration-300 min-w-[120px] bg-gradient-to-r shadow-lg",
+                            timerType === 'work'
+                              ? "from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-indigo-500/20"
+                              : "from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 shadow-blue-500/20"
+                          )}
+                        >
+                          {isRunning ? 'Pause' : 'Start'}
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          onClick={handleTimerReset}
+                          className={cn(
+                            "transition-colors min-w-[120px]",
+                            timerType === 'work'
+                              ? "border-indigo-200 text-indigo-500 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/20"
+                              : "border-blue-200 text-blue-500 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950/20"
+                          )}
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Timer Settings Dialog */}
+                <Dialog open={isTimerDialogOpen} onOpenChange={setIsTimerDialogOpen}>
+                  <DialogContent className="sm:max-w-[425px] bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-200 dark:border-gray-800">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                        Timer Settings
+                      </DialogTitle>
+                      <DialogDescription className="text-center text-gray-500 dark:text-gray-400">
+                        Customize your focus and break durations
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="workDuration" className="text-gray-700 dark:text-gray-300">Focus Duration (minutes)</Label>
+                        <Input
+                          id="workDuration"
+                          type="number"
+                          min="1"
+                          max="60"
+                          value={timerMinutes}
+                          onChange={(e) => setTimerMinutes(e.target.value)}
+                          className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="shortBreak" className="text-gray-700 dark:text-gray-300">Short Break (minutes)</Label>
+                        <Input
+                          id="shortBreak"
+                          type="number"
+                          value={shortBreakMinutes}
+                          onChange={(e) => setShortBreakMinutes(e.target.value)}
+                          min="1"
+                          max="30"
+                          className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="longBreak" className="text-gray-700 dark:text-gray-300">Long Break (minutes)</Label>
+                        <Input
+                          id="longBreak"
+                          type="number"
+                          value={longBreakMinutes}
+                          onChange={(e) => setLongBreakMinutes(e.target.value)}
+                          min="5"
+                          max="60"
+                          className="col-span-3 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            id="autoStart"
+                            checked={autoStartBreaks}
+                            onChange={(e) => setAutoStartBreaks(e.target.checked)}
+                            className="peer h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-500 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                        </div>
+                        <Label 
+                          htmlFor="autoStart" 
+                          className="text-sm text-gray-700 dark:text-gray-300"
+                        >
+                          Auto-start next session
+                        </Label>
+                      </div>
+                    </div>
+                    <DialogFooter className="sm:justify-center">
+                      <div className="flex gap-3 w-full">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsTimerDialogOpen(false)}
+                          className="flex-1 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            if (timerType === 'work') {
+                              setTime(parseInt(timerMinutes) * 60);
+                            } else {
+                              setTime(cycles < 3 ? parseInt(shortBreakMinutes) * 60 : parseInt(longBreakMinutes) * 60);
+                            }
+                            setIsTimerDialogOpen(false);
+                          }}
+                          className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+                        >
+                          Apply Settings
+                        </Button>
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Next Session Indicator */}
+                <div className={cn(
+                  "absolute top-4 right-4 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300",
+                  timerType === 'work'
+                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400"
+                    : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                )}>
+                  Next: {timerType === 'work' 
+                    ? cycles < 3 
+                      ? `${shortBreakMinutes}m break` 
+                      : `${longBreakMinutes}m break`
+                    : `${timerMinutes}m focus`
+                  }
                 </div>
-                <div className="col-span-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-md bg-purple-50 dark:bg-purple-900/20">
-                      <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </motion.div>
+            </motion.div>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Add Event Dialog */}
+      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
+        <DialogContent className="w-[95vw] max-w-[525px] p-4 sm:p-6 mx-4">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+              Add New Event
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Event Title</Label>
+              <Input
+                id="title"
+                value={newEvent.title}
+                onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                placeholder="Enter event title"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                placeholder="Enter event description"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Start Date & Time</Label>
+              <div className="relative">
+                <DatePicker
+                  selected={newEvent.startDate ? new Date(newEvent.startDate) : null}
+                  onChange={(date: Date | null) => date && setNewEvent({
+                    ...newEvent,
+                    startDate: date.toISOString(),
+                    // If end date is not set or is before start date, set it to 1 hour after start
+                    endDate: !newEvent.endDate || new Date(newEvent.endDate) <= date
+                      ? new Date(date.getTime() + 60 * 60 * 1000).toISOString()
+                      : newEvent.endDate
+                  })}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  customInput={
+                    <div className="relative w-full">
+                      <Input
+                        value={newEvent.startDate ? format(new Date(newEvent.startDate), 'MMM d, yyyy h:mm aa') : ''}
+                        readOnly
+                        className="cursor-pointer pl-10"
+                      />
+                      <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">End</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedEvent && selectedEvent.end && !isNaN(selectedEvent.end.getTime())
-                          ? format(selectedEvent.end, 'PPp')
-                          : 'Invalid date'}
-                      </p>
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>End Date & Time</Label>
+              <div className="relative">
+                <DatePicker
+                  selected={newEvent.endDate ? new Date(newEvent.endDate) : null}
+                  onChange={(date: Date | null) => date && setNewEvent({
+                    ...newEvent,
+                    endDate: date.toISOString()
+                  })}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  minDate={newEvent.startDate ? new Date(newEvent.startDate) : undefined}
+                  customInput={
+                    <div className="relative w-full">
+                      <Input
+                        value={newEvent.endDate ? format(new Date(newEvent.endDate), 'MMM d, yyyy h:mm aa') : ''}
+                        readOnly
+                        className="cursor-pointer pl-10"
+                      />
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     </div>
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Event Type</Label>
+              <select
+                value={newEvent.type}
+                onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as typeof newEvent.type })}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800"
+              >
+                <option value="homework">Homework</option>
+                <option value="study">Study Session</option>
+                <option value="meeting">Meeting</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            {newEvent.type === 'other' && (
+              <div className="grid gap-2">
+                <Label htmlFor="customType">Custom Event Type</Label>
+                <Input
+                  id="customType"
+                  value={newEvent.customType || ''}
+                  onChange={(e) => setNewEvent({ ...newEvent, customType: e.target.value })}
+                  placeholder="Enter custom event type"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-4">
+            <Button variant="outline" onClick={() => setIsAddEventOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => handleAddEvent(newEvent)}
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+            >
+              Add Event
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Event Details Dialog */}
+      <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
+        <DialogContent className="w-[95vw] max-w-[525px] p-4 sm:p-6 mx-4">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-bold flex items-center gap-3">
+              {selectedEvent?.title.replace(/[📋👥📚📝🎯]/g, '').trim()}
+            </DialogTitle>
+            {selectedEvent?.sourceName && (
+              <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
+                {selectedEvent.sourceName}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-900/20">
+                    <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Start</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedEvent && selectedEvent.start && !isNaN(selectedEvent.start.getTime())
+                        ? format(selectedEvent.start, 'PPp')
+                        : 'Invalid date'}
+                    </p>
                   </div>
                 </div>
               </div>
-              {selectedEvent?.description && (
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedEvent.description}
-                  </p>
+              <div className="col-span-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-purple-50 dark:bg-purple-900/20">
+                    <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">End</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedEvent && selectedEvent.end && !isNaN(selectedEvent.end.getTime())
+                        ? format(selectedEvent.end, 'PPp')
+                        : 'Invalid date'}
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2 mt-4">
-              {selectedEvent?.source === 'personal' && (
-                <>
-                  {!selectedEvent.completed && (
-                    <Button
-                      onClick={() => {
-                        handleEventComplete(selectedEvent);
-                        setIsEventDetailsOpen(false);
-                      }}
-                      size="sm"
-                      className="bg-green-500 hover:bg-green-600 text-white"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Complete
-                    </Button>
-                  )}
-                  {selectedEvent.cleared ? (
-                    <Button
-                      onClick={() => handleUnclearEvent(selectedEvent.id)}
-                      variant="outline"
-                      size="sm"
-                      className="text-blue-500 hover:text-blue-600"
-                    >
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      Restore to Calendar
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => handleClearEvent(selectedEvent.id)}
-                      variant="outline"
-                      size="sm"
-                      className="text-orange-500 hover:text-orange-600"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Clear
-                    </Button>
-                  )}
+            {selectedEvent?.description && (
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedEvent.description}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 mt-4">
+            {selectedEvent?.source === 'personal' && (
+              <>
+                {!selectedEvent.completed && (
                   <Button
-                    onClick={() => handleDeleteEvent(selectedEvent.id)}
+                    onClick={() => {
+                      handleEventComplete(selectedEvent);
+                      setIsEventDetailsOpen(false);
+                    }}
+                    size="sm"
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                    Complete
+                  </Button>
+                )}
+                {selectedEvent.cleared ? (
+                  <Button
+                    onClick={() => handleUnclearEvent(selectedEvent.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-500 hover:text-red-600"
+                    className="text-blue-500 hover:text-blue-600"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    Restore to Calendar
                   </Button>
-                </>
-              )}
-              {selectedEvent?.source !== 'personal' && (
+                ) : (
+                  <Button
+                    onClick={() => handleClearEvent(selectedEvent.id)}
+                    variant="outline"
+                    size="sm"
+                    className="text-orange-500 hover:text-orange-600"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
                 <Button
-                  onClick={() => {
-                    navigateToSource(selectedEvent!.source, selectedEvent!.sourceId);
-                    setIsEventDetailsOpen(false);
-                  }}
+                  onClick={() => handleDeleteEvent(selectedEvent.id)}
+                  variant="outline"
                   size="sm"
-                  className="bg-purple-500 hover:bg-purple-600 text-white"
+                  className="text-red-500 hover:text-red-600"
                 >
-                  View in {selectedEvent?.source === 'team' ? 'Team' : 'Study Group'}
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
                 </Button>
-              )}
-              <Button 
-                variant="outline" 
+              </>
+            )}
+            {selectedEvent?.source !== 'personal' && (
+              <Button
+                onClick={() => {
+                  navigateToSource(selectedEvent!.source, selectedEvent!.sourceId);
+                  setIsEventDetailsOpen(false);
+                }}
                 size="sm"
-                onClick={() => setIsEventDetailsOpen(false)}
+                className="bg-purple-500 hover:bg-purple-600 text-white"
               >
-                Close
+                View in {selectedEvent?.source === 'team' ? 'Team' : 'Study Group'}
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsEventDetailsOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Task Details Dialog */}
-        <Dialog open={isTaskDetailsOpen} onOpenChange={setIsTaskDetailsOpen}>
-          <DialogContent className="w-[95vw] max-w-[525px] bg-white dark:bg-gray-900">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-                {selectedTask?.title}
-              </DialogTitle>
-              {selectedTask?.sourceName && (
-                <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
-                  {selectedTask.sourceName}
-                </DialogDescription>
-              )}
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-900/20">
-                      <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedTask && format(new Date(selectedTask.dueDate), 'PPp')}
-                      </p>
-                    </div>
+      {/* Task Details Dialog */}
+      <Dialog open={isTaskDetailsOpen} onOpenChange={setIsTaskDetailsOpen}>
+        <DialogContent className="w-[95vw] max-w-[525px] p-4 sm:p-6 mx-4">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+              {selectedTask?.title}
+            </DialogTitle>
+            {selectedTask?.sourceName && (
+              <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
+                {selectedTask.sourceName}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-900/20">
+                    <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                </div>
-                <div className="col-span-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-green-50 dark:bg-green-900/20">
-                      {selectedTask?.completed ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedTask?.completed ? 'Completed' : 'Pending'}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedTask && format(new Date(selectedTask.dueDate), 'PPp')}
+                    </p>
                   </div>
                 </div>
               </div>
-              {selectedTask?.description && (
-                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedTask.description}
-                  </p>
+              <div className="col-span-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-green-50 dark:bg-green-900/20">
+                    {selectedTask?.completed ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedTask?.completed ? 'Completed' : 'Pending'}
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              {selectedTask?.source === 'team' && (
-                <Button
-                  onClick={() => {
-                    navigateToSource('team', selectedTask.sourceId);
-                    setIsTaskDetailsOpen(false);
-                  }}
-                  className="bg-purple-500 hover:bg-purple-600 text-white"
-                >
-                  View in Team
-                </Button>
-              )}
+            {selectedTask?.description && (
+              <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedTask.description}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            {selectedTask?.source === 'team' && (
               <Button
-                variant="outline"
-                onClick={() => setIsTaskDetailsOpen(false)}
-                className="bg-white dark:bg-gray-800"
+                onClick={() => {
+                  navigateToSource('team', selectedTask.sourceId);
+                  setIsTaskDetailsOpen(false);
+                }}
+                className="bg-purple-500 hover:bg-purple-600 text-white"
               >
-                Close
+                View in Team
               </Button>
-              {!selectedTask?.completed && (
-                <Button
-                  onClick={() => {
-                    toggleTaskCompletion(selectedTask!.id);
-                    setIsTaskDetailsOpen(false);
-                  }}
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Mark Complete
-                </Button>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => setIsTaskDetailsOpen(false)}
+              className="bg-white dark:bg-gray-800"
+            >
+              Close
+            </Button>
+            {!selectedTask?.completed && (
+              <Button
+                onClick={() => {
+                  toggleTaskCompletion(selectedTask!.id);
+                  setIsTaskDetailsOpen(false);
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Mark Complete
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Add responsive styles for calendar */}
-        <style jsx global>{`
-          /* Calendar Styles */
+      {/* Add responsive calendar styles */}
+      <style jsx global>{`
+        /* Base Calendar Styles */
+        .rbc-calendar {
+          width: 100% !important;
+          min-height: 300px !important;
+        }
+
+        /* Mobile-first Calendar Styles */
+        @media (max-width: 640px) {
           .rbc-calendar {
-            background-color: transparent !important;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-            border-radius: 0.5rem !important;
-            overflow: visible !important;
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-
-          .dark .rbc-calendar {
-            color: #fff;
-          }
-
-          /* Month View Styles */
-          .rbc-month-view {
-            flex: 1 1 0 !important;
-            height: 100% !important;
-            min-height: 0 !important;
+            font-size: 11px !important;
+            border-radius: 8px !important;
             overflow: hidden !important;
-            display: flex !important;
+          }
+
+          .rbc-toolbar {
             flex-direction: column !important;
+            padding: 8px !important;
+            gap: 8px !important;
+            background: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+          }
+
+          .dark .rbc-toolbar {
+            background: rgba(17, 24, 39, 0.4) !important;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.4) !important;
+          }
+
+          .rbc-toolbar-label {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            order: -1 !important;
+          }
+
+          .rbc-btn-group {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            width: 100% !important;
+            gap: 4px !important;
+          }
+
+          .rbc-btn-group button {
+            padding: 6px 8px !important;
+            font-size: 12px !important;
+            border-radius: 6px !important;
+            border: 1px solid #e5e7eb !important;
+            background: white !important;
+            color: #374151 !important;
+          }
+
+          .dark .rbc-btn-group button {
+            background: rgba(31, 41, 55, 0.4) !important;
+            border-color: rgba(75, 85, 99, 0.4) !important;
+            color: #e5e7eb !important;
+          }
+
+          .rbc-btn-group button.rbc-active {
+            background: #4f46e5 !important;
+            color: white !important;
+            border-color: #4338ca !important;
+          }
+
+          .dark .rbc-btn-group button.rbc-active {
+            background: #6366f1 !important;
+            border-color: #4f46e5 !important;
+          }
+
+          .rbc-month-view {
+            border: none !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
           }
 
           .rbc-month-header {
-            flex: 0 0 auto !important;
+            background: #f3f4f6 !important;
+            border-bottom: 1px solid #e5e7eb !important;
           }
 
-          .rbc-month-row {
-            flex: 1 1 0 !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            display: flex !important;
+          .dark .rbc-month-header {
+            background: rgba(31, 41, 55, 0.4) !important;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.4) !important;
           }
 
-          .rbc-row-bg {
-            display: flex !important;
-            flex: 1 1 0 !important;
-            min-height: inherit !important;
+          .rbc-header {
+            padding: 8px 4px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border: none !important;
           }
 
-          .rbc-row-content {
-            margin: 0 !important;
+          .rbc-date-cell {
+            padding: 4px !important;
+            font-size: 11px !important;
+          }
+
+          .rbc-event {
+            padding: 2px 4px !important;
+            font-size: 10px !important;
+            border-radius: 4px !important;
+            margin: 1px !important;
+            min-height: 18px !important;
+            border: none !important;
+          }
+
+          .rbc-show-more {
+            font-size: 10px !important;
+            color: #4f46e5 !important;
+            background: transparent !important;
             padding: 2px !important;
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-          }
-
-          .rbc-date-cell {
-            padding: 4px !important;
-            text-align: center !important;
-            flex: 1 !important;
-          }
-
-          .rbc-day-bg {
-            flex: 1 1 0 !important;
-          }
-
-          .rbc-month-view .rbc-header {
-            padding: 8px 3px !important;
-            font-weight: 500 !important;
-            font-size: 0.875rem !important;
-          }
-
-          .rbc-month-view .rbc-header + .rbc-header {
-            border-left: 1px solid #e5e7eb !important;
-          }
-
-          .dark .rbc-month-view .rbc-header + .rbc-header {
-            border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-          }
-
-          .rbc-off-range-bg {
-            background-color: rgba(0, 0, 0, 0.03) !important;
-          }
-
-          .dark .rbc-off-range-bg {
-            background-color: rgba(255, 255, 255, 0.03) !important;
-          }
-
-          .rbc-date-cell {
-            padding: 4px !important;
-            text-align: center !important;
-            font-size: 0.875rem !important;
-          }
-
-          .rbc-date-cell.rbc-now {
-            font-weight: bold !important;
-            color: #6366f1 !important;
           }
 
           .rbc-row-segment {
-            padding: 2px 4px !important;
+            padding: 1px !important;
           }
 
-          /* Event Styles */
+          .rbc-today {
+            background-color: #f0f9ff !important;
+          }
+
+          .dark .rbc-today {
+            background-color: rgba(59, 130, 246, 0.1) !important;
+          }
+        }
+
+        /* Tablet Calendar Styles */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .rbc-calendar {
+            font-size: 12px !important;
+          }
+
+          .rbc-toolbar {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            padding: 12px !important;
+            background: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+          }
+
+          .dark .rbc-toolbar {
+            background: rgba(17, 24, 39, 0.4) !important;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.4) !important;
+          }
+
+          .rbc-toolbar-label {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+          }
+
+          .rbc-btn-group {
+            gap: 4px !important;
+          }
+
           .rbc-event {
-            padding: 0 !important;
-            border: none !important;
-            margin: 1px 0 !important;
-            background: none !important;
+            min-height: 22px !important;
+            font-size: 11px !important;
+          }
+        }
+
+        /* Desktop Calendar Styles */
+        @media (min-width: 1025px) {
+          .rbc-calendar {
+            font-size: 13px !important;
           }
 
-          .rbc-event-content {
-            height: 100% !important;
-            width: 100% !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            background: none !important;
+          .rbc-toolbar {
+            padding: 16px !important;
           }
 
-          .rbc-event-label {
-            display: none !important;
+          .rbc-toolbar-label {
+            font-size: 20px !important;
           }
 
-          .rbc-event.rbc-selected {
-            background: none !important;
-            box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.5) !important;
-          }
-
-          .rbc-event:hover {
-            transform: translateY(-1px) !important;
-          }
-
-          /* Week/Day View Improvements */
-          .rbc-time-view .rbc-time-content {
-            min-height: 600px !important;
-          }
-
-          .rbc-time-view .rbc-event {
-            padding: 2px 4px !important;
-          }
-
-          /* Fix event positioning */
           .rbc-event {
-            z-index: 1 !important;
+            min-height: 24px !important;
+            font-size: 12px !important;
           }
-
-          .rbc-event-content {
-            z-index: 2 !important;
-          }
-
-          /* Responsive Calendar Styles */
-          @media (max-width: 768px) {
-            .rbc-calendar {
-              font-size: 0.875rem !important;
-            }
-
-            .rbc-toolbar {
-              flex-direction: column !important;
-              align-items: stretch !important;
-              gap: 0.5rem !important;
-            }
-
-            .rbc-toolbar-label {
-              text-align: center !important;
-              margin: 0.5rem 0 !important;
-            }
-
-            .rbc-btn-group {
-              justify-content: center !important;
-            }
-
-            .rbc-header {
-              padding: 4px !important;
-              font-size: 0.75rem !important;
-            }
-
-            .rbc-date-cell {
-              padding: 2px !important;
-              font-size: 0.75rem !important;
-            }
-
-            .rbc-event {
-              margin: 1px 0 !important;
-            }
-
-            .rbc-event-content {
-              font-size: 0.7rem !important;
-            }
-          }
-
-          /* Improve touch targets on mobile */
-          @media (max-width: 768px) {
-            .rbc-button-link {
-              padding: 8px !important;
-            }
-
-            .rbc-event {
-              min-height: 24px !important;
-            }
-          }
-
-          /* Adjust calendar header for small screens */
-          @media (max-width: 480px) {
-            .rbc-toolbar {
-              font-size: 0.875rem !important;
-            }
-
-            .rbc-btn-group button {
-              padding: 4px 8px !important;
-            }
-          }
-
-          /* Ensure proper spacing in month view on mobile */
-          @media (max-width: 768px) {
-            .rbc-month-view {
-              min-height: 400px !important;
-            }
-
-            .rbc-month-row {
-              min-height: 80px !important;
-            }
-          }
-        `}</style>
-      </motion.div>
+        }
+      `}</style>
     </div>
   );
 }
