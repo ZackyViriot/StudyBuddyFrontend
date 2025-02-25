@@ -227,8 +227,8 @@ const DashboardPage = () => {
 
   useEffect(() => {
     // Create audio elements for timer completion sounds
-    audioRef.current = new Audio('/timer-complete.mp3');
-    breakAudioRef.current = new Audio('/break-complete.mp3');
+    audioRef.current = new Audio(`${config.API_URL}/timer-complete.mp3`);
+    breakAudioRef.current = new Audio(`${config.API_URL}/break-complete.mp3`);
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();

@@ -145,14 +145,14 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/');
+        router.push('/auth/signin');
         return false;
       }
 
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         localStorage.removeItem('token');
-        router.push('/');
+        router.push('/auth/signin');
         return false;
       }
 
@@ -162,16 +162,27 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
       if (Date.now() >= expirationTime) {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
-        router.push('/');
+        router.push('/auth/signin');
         return false;
       }
 
+      // Validate that we have a user ID in the token
+      if (!payload.sub) {
+        console.error('No user ID in token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        router.push('/auth/signin');
+        return false;
+      }
+
+      // Update userId in localStorage
+      localStorage.setItem('userId', payload.sub);
       return true;
     } catch (error) {
       console.error('Error validating token:', error);
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
-      router.push('/');
+      router.push('/auth/signin');
       return false;
     }
   };
@@ -207,7 +218,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
         if (response.status === 401 || response.status === 403) {
           localStorage.removeItem('token');
           localStorage.removeItem('userId');
-          router.push('/');
+          router.push('/auth/signin');
           return;
         }
         
@@ -224,7 +235,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
       if (!isMember) {
         console.log('User is not a member of this team');
-        router.push('/');
+        router.push('/teams');
         return;
       }
 
@@ -232,7 +243,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
     } catch (error) {
       console.error('Error fetching team:', error);
       setTeam(null);
-      router.push('/');
+      router.push('/teams');
     } finally {
       setIsLoading(false);
     }
@@ -591,28 +602,28 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
           {/* Header Section */}
           <motion.div 
             variants={itemVariants} 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-8 mb-4 sm:mb-8 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <Avatar className="h-20 w-20 border-4 border-white dark:border-gray-700 shadow-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+              <div className="flex items-center space-x-4 sm:space-x-6">
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white dark:border-gray-700 shadow-2xl">
                   <AvatarImage src={team.createdBy?.profilePicture} />
-                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-2xl">
+                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xl sm:text-2xl">
                     {team.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
                     {team.name}
                   </h1>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg mt-2">{team.description}</p>
+                  <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mt-2">{team.description}</p>
                 </div>
               </div>
             </div>
           </motion.div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-8">
             <motion.div 
               variants={itemVariants}
               whileHover="hover"
@@ -716,7 +727,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
           {/* Main Content Grid */}
           {/* Calendar Section - Full Width */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[700px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1">
+            <Card className="bg-white dark:bg-gray-800 shadow-xl border-none h-[500px] sm:h-[700px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1">
               <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-gray-800/50 p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -931,12 +942,12 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
             </Card>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Team Info Section */}
             <Card className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-none transition-all duration-300 hover:shadow-[0_20px_40px_rgb(99,102,241,0.15)] dark:hover:shadow-[0_20px_40px_rgb(99,102,241,0.25)] hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-semibold tracking-tight">{team.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{team.name}</h2>
                   <p className="text-sm text-muted-foreground">{team.description}</p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1096,7 +1107,7 @@ export function TeamPageClient({ teamId }: TeamPageClientProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-6 py-8 font-outfit">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 font-outfit">
         {renderContent()}
       </div>
     </div>
@@ -1107,18 +1118,18 @@ const TeamTasks: React.FC<{ tasks: TeamTask[]; onTaskComplete: (taskId: string) 
   return (
     <div className="space-y-4">
       {tasks.map(task => (
-        <div key={task._id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg">
+        <div key={task._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg gap-2">
           <div className="flex items-center space-x-3">
             <Checkbox
               checked={task.status === 'completed'}
               onCheckedChange={() => task._id && onTaskComplete(task._id)}
             />
             <div>
-              <h4 className="font-medium">{task.title}</h4>
-              <p className="text-sm text-gray-500">{task.description}</p>
+              <h4 className="font-medium line-clamp-2">{task.title}</h4>
+              <p className="text-sm text-gray-500 line-clamp-2">{task.description}</p>
             </div>
           </div>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="self-start sm:self-center">
             {format(new Date(task.dueDate), 'MMM d, yyyy')}
           </Badge>
         </div>

@@ -74,7 +74,7 @@ export default function StudyGroupsPage() {
     try {
       if (!authToken) {
         console.error('No auth token available');
-        router.push('/');
+        router.push('/auth/signin');
         return;
       }
 
@@ -90,7 +90,7 @@ export default function StudyGroupsPage() {
         if (response.status === 401 || response.status === 403) {
           console.error('Authentication failed - redirecting to login');
           localStorage.removeItem('token');
-          router.push('/');
+          router.push('/auth/signin');
           return;
         }
         throw new Error(`Failed to fetch study groups: ${response.status}`);
@@ -109,7 +109,7 @@ export default function StudyGroupsPage() {
     try {
       if (!authToken) {
         console.error('No auth token available');
-        router.push('/');
+        router.push('/auth/signin');
         return;
       }
 
@@ -125,7 +125,7 @@ export default function StudyGroupsPage() {
         if (response.status === 401 || response.status === 403) {
           console.error('Authentication failed - redirecting to login');
           localStorage.removeItem('token');
-          router.push('/');
+          router.push('/auth/signin');
           return;
         }
         throw new Error(`Failed to fetch my study groups: ${response.status}`);
@@ -163,7 +163,7 @@ export default function StudyGroupsPage() {
     const storedToken = localStorage.getItem('token');
     if (!storedToken) {
       console.error('No token found in localStorage');
-      router.push('/');
+      router.push('/auth/signin');
       return;
     }
 
@@ -172,7 +172,7 @@ export default function StudyGroupsPage() {
       if (tokenParts.length !== 3) {
         console.error('Invalid token format');
         localStorage.removeItem('token');
-        router.push('/');
+        router.push('/auth/signin');
         return;
       }
 
@@ -182,19 +182,25 @@ export default function StudyGroupsPage() {
       if (Date.now() >= expirationTime) {
         console.error('Token has expired');
         localStorage.removeItem('token');
-        router.push('/');
+        router.push('/auth/signin');
         return;
       }
 
       setToken(storedToken);
-      // Store the user ID from the token payload
-      const userId = payload.userId || payload.sub;
+      // Store the user ID from the token payload - use sub as that's what the backend uses
+      const userId = payload.sub;
+      if (!userId) {
+        console.error('No user ID in token');
+        localStorage.removeItem('token');
+        router.push('/auth/signin');
+        return;
+      }
       localStorage.setItem('userId', userId);
       fetchData(storedToken);
     } catch (error) {
       console.error('Error validating token:', error);
       localStorage.removeItem('token');
-      router.push('/');
+      router.push('/auth/signin');
     }
   }, [router, fetchData]);
 
@@ -202,12 +208,14 @@ export default function StudyGroupsPage() {
     try {
       if (!token) {
         setError('You must be logged in to create a study group');
+        router.push('/auth/signin');
         return;
       }
 
       const userId = localStorage.getItem('userId');
       if (!userId) {
         setError('User ID not found');
+        router.push('/auth/signin');
         return;
       }
 
@@ -243,7 +251,7 @@ export default function StudyGroupsPage() {
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('token');
-          router.push('/');
+          router.push('/auth/signin');
           return;
         }
         const errorData = await response.json();
